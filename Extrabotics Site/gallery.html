@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gallery - Extrabotics</title>
+    <link rel="stylesheet" href="styles.css">
+        
+</head>
+<body>
+    <!-- Floating Tech Elements -->
+    <div class="floating-elements">
+        <div class="tech-particle" style="top: 20%; left: 10%; animation-delay: 0s;">⚙️</div>
+        <div class="tech-particle" style="top: 60%; right: 15%; animation-delay: 2s;">🔧</div>
+        <div class="tech-particle" style="top: 40%; left: 80%; animation-delay: 4s;">💾</div>
+        <div class="tech-particle" style="top: 80%; left: 20%; animation-delay: 1s;">🖥️</div>
+        <div class="tech-particle" style="top: 30%; right: 5%; animation-delay: 3s;">📊</div>
+        <div class="tech-particle" style="top: 70%; right: 25%; animation-delay: 5s;">🔬</div>
+    </div>
+
+    <!-- Matrix Background -->
+    <div class="matrix-bg">
+        <canvas id="matrix-canvas"></canvas>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo glitch-effect">Extrabotics</a>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="nav-link">Home</a></li>
+                <li><a href="about.html" class="nav-link">About</a></li>
+                <li><a href="events.html" class="nav-link">Events</a></li>
+                <li><a href="gallery.html" class="nav-link active">Gallery</a></li>
+                <li><a href="results.html" class="nav-link">Results</a></li>
+                <li><a href="contact.html" class="nav-link">Contact Us</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- About Hero Section -->
+    <section class="about-hero">
+        <div class="container">
+            <h1 class="fade-in-up">Gallery</h1>
+            <p class="fade-in-up" style="animation-delay: 0.3s;">
+                Explore our collection of robots, competition moments, workshops, and team achievements. See the innovation and dedication that drives our success.
+            </p>
+        </div>
+    </section>
+   <div class="gallery-container">
+    <!-- Filter Buttons -->
+    <div class="filter-buttons">
+      <button class="active" onclick="filterSelection('all')">All</button>
+      <button onclick="filterSelection('robots')">Robots</button>
+      <button onclick="filterSelection('competitions')">Competitions</button>
+      <button onclick="filterSelection('workshops')">Workshops</button>
+      <button onclick="filterSelection('projects')">Projects</button>
+      <button onclick="filterSelection('team')">Team</button>
+    </div>
+
+    <!-- Gallery Grid -->
+    <div class="gallery-grid">
+      
+      <!-- Card Example -->
+      <div class="card-wrapper filter-item competitions">
+        <span class="year-tag">2025</span>
+        <div class="card">
+          <img src="robot.jpg" alt="Robot">
+          <div class="card-content">
+            <h3>Robo-Football</h3>
+            <p>Robofootball championship held in 2025</p>
+            <a href="Rc_phots.html"><button class="event-btn"> View Photos</button></a>
+            <span class="badge">Competitions</span>
+          </div>
+        </div>
+      </div>
+
+      
+    </div>
+    
+  </div>
+
+  <script>
+    function filterSelection(category) {
+      let items = document.querySelectorAll(".filter-item");
+      let buttons = document.querySelectorAll(".filter-buttons button");
+
+      buttons.forEach(btn => btn.classList.remove("active"));
+      event.target.classList.add("active");
+
+      if (category === "all") {
+        items.forEach(item => item.classList.remove("hidden"));
+      } else {
+        items.forEach(item => {
+          item.classList.add("hidden");
+          if (item.classList.contains(category)) {
+            item.classList.remove("hidden");
+          }
+        });
+      }
+    }
+  </script>
+  </section>
+    
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-section">
+                    <h3>Extrabotics</h3>
+                    <p>Pushing the boundaries of robotics innovation through cutting-edge technology and education.</p>
+                    <div class="social-links">
+                        <a href="contact.html" class="social-link">📧</a>
+                        <a href="contact.html" class="social-link">📱</a>
+                        <a href="contact.html" class="social-link">🔗</a>
+                    </div>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Quick Links</h4>
+                    <ul class="footer-links">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="about.html">About</a></li>
+                        <li><a href="events.html">Events</a></li>
+                        <li><a href="gallery.html">Gallery</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Programs</h4>
+                    <ul class="footer-links">
+                        <li><a href="events.html">Robotics Competitions</a></li>
+                        <li><a href="events.html">Educational Workshops</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-section">
+                    <h4>Contact</h4>
+                    <div class="contact-info">
+                        <p>Ruaraka, Outering Road</p>
+                        <p>+254 706 781 886</p>
+                        <p>info@extrabotics.com</p>
+                        <p>competitions@extrabotics.com</p>
+                        <p>proposals@extrabotics.com</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Extrabotics. All rights reserved. | Designed for innovation and excellence.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+</html>

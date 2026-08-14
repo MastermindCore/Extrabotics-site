@@ -2977,16 +2977,7 @@ async function raceResetTimer(lane) {
   racePenaltyReset(lane);
 }
 
-async function raceStartAll() {
-  const active = [1, 2].filter(l => !!document.getElementById(`race-bot${l}-name`).value.trim());
-  if (!active.length) { alert('Enter at least one bot name'); return; }
-  // Capture a single "now" so all lanes start from the identical millisecond
-  const now = firebase.firestore.Timestamp.now();
-  await Promise.all(active.map(l => {
-    const sessionKey = Date.now().toString(36) + Math.random().toString(36).slice(2) + '-' + l;
-    return rTimerDocs[l].set({ running: true, startTime: now, finalTime: null, sessionKey });
-  }));
-}
+
 
 async function raceFinishBot(lane){
   const name=document.getElementById(`race-bot${lane}-name`).value.trim();

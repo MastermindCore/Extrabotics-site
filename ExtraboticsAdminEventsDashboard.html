@@ -659,7 +659,7 @@ tr.position-3 td:first-child { color:#c05621; font-weight:700; }
 }
 
 /* ── LANE CARDS (Racing) ── */
-.lane-cards { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:20px; }
+.lane-cards { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:20px; }
 @media(max-width:900px){ .lane-cards{grid-template-columns:1fr;} }
 .lane-card {
   background: var(--panel);
@@ -675,6 +675,17 @@ tr.position-3 td:first-child { color:#c05621; font-weight:700; }
 .lane-card.lane-2::before { background:linear-gradient(90deg, #11998e, #38ef7d); }
 .lane-card.lane-3::before { background:linear-gradient(90deg, #f093fb, var(--pink)); }
 .lane-label { font-size:0.67rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+
+/* ── PENALTY CONTROLS (Racing) ── */
+.penalty-box {
+  background: rgba(229,62,62,0.04);
+  border: 1px solid rgba(229,62,62,0.18);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 14px;
+}
+.penalty-box-title { font-size:0.67rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--danger); margin-bottom:10px; }
+.penalty-info { text-align:center; font-size:0.78rem; color:var(--muted); margin-top:8px; font-weight:600; }
 
 /* ── SCORE INPUTS ── */
 .score-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
@@ -1310,7 +1321,7 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
         <div class="panel-title">
           <span style="font-size:2rem">🏎️</span>
           <h2>RACING BOTS</h2>
-          <span class="panel-badge">3-Lane Mode</span>
+          <span class="panel-badge">2-Lane Mode · Line &amp; Swirl Penalties</span>
         </div>
 
         <div class="card" style="margin-bottom:18px">
@@ -1331,9 +1342,20 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
               <button class="btn btn-warn btn-sm"    onclick="raceStopTimer(1)">⏹</button>
               <button class="btn btn-outline btn-sm" onclick="raceResetTimer(1)">↺</button>
             </div>
+
+            <div class="penalty-box">
+              <div class="penalty-box-title">⚠️ Penalties</div>
+              <div class="btn-group btn-group-center" style="margin-top:0">
+                <button class="btn btn-warn btn-xs" onclick="racePenalty(1,'line')">➖ Line Touch</button>
+                <button class="btn btn-danger btn-xs" onclick="racePenalty(1,'swirl')">🌀 Swirl Cut</button>
+                <button class="btn btn-outline btn-xs" onclick="racePenaltyReset(1)">↺ Reset</button>
+              </div>
+              <div class="penalty-info" id="race-bot1-penalty-info">Line: 0 · Swirl: 0 · +0.0s</div>
+            </div>
+
             <div class="form-group"><label>Bot Name</label><input id="race-bot1-name" type="text" placeholder="Bot name" /></div>
             <div class="form-group"><label>Team</label><input id="race-bot1-team" type="text" placeholder="Team name" /></div>
-            <div class="form-group"><label>Time (seconds)</label><input id="race-bot1-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
+            <div class="form-group"><label>Raw Time (seconds)</label><input id="race-bot1-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
             <div class="form-group"><label>Status</label><select id="race-bot1-status"><option value="completed">Completed</option><option value="dnf">Did Not Finish</option><option value="disqualified">Disqualified</option></select></div>
             <button class="btn btn-success btn-full" onclick="raceFinishBot(1)">✅ Finish Lane 1</button>
             <div id="race-bot1-info" style="text-align:center;margin-top:8px;font-size:0.8rem;color:var(--muted)">Waiting...</div>
@@ -1348,29 +1370,23 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
               <button class="btn btn-warn btn-sm"    onclick="raceStopTimer(2)">⏹</button>
               <button class="btn btn-outline btn-sm" onclick="raceResetTimer(2)">↺</button>
             </div>
+
+            <div class="penalty-box">
+              <div class="penalty-box-title">⚠️ Penalties</div>
+              <div class="btn-group btn-group-center" style="margin-top:0">
+                <button class="btn btn-warn btn-xs" onclick="racePenalty(2,'line')">➖ Line Touch</button>
+                <button class="btn btn-danger btn-xs" onclick="racePenalty(2,'swirl')">🌀 Swirl Cut</button>
+                <button class="btn btn-outline btn-xs" onclick="racePenaltyReset(2)">↺ Reset</button>
+              </div>
+              <div class="penalty-info" id="race-bot2-penalty-info">Line: 0 · Swirl: 0 · +0.0s</div>
+            </div>
+
             <div class="form-group"><label>Bot Name</label><input id="race-bot2-name" type="text" placeholder="Bot name" /></div>
             <div class="form-group"><label>Team</label><input id="race-bot2-team" type="text" placeholder="Team name" /></div>
-            <div class="form-group"><label>Time (seconds)</label><input id="race-bot2-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
+            <div class="form-group"><label>Raw Time (seconds)</label><input id="race-bot2-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
             <div class="form-group"><label>Status</label><select id="race-bot2-status"><option value="completed">Completed</option><option value="dnf">Did Not Finish</option><option value="disqualified">Disqualified</option></select></div>
             <button class="btn btn-success btn-full" onclick="raceFinishBot(2)">✅ Finish Lane 2</button>
             <div id="race-bot2-info" style="text-align:center;margin-top:8px;font-size:0.8rem;color:var(--muted)">Waiting...</div>
-          </div>
-
-          <!-- Lane 3 -->
-          <div class="lane-card lane-3">
-            <div class="lane-label" style="color:#c2185b">🏁 Lane 3 <span style="font-size:0.6rem;color:var(--muted)">(optional)</span></div>
-            <div class="lane-timer" id="race-timer-3">00:00.000</div>
-            <div class="btn-group btn-group-center" style="margin-bottom:14px">
-              <button class="btn btn-success btn-sm" onclick="raceStartTimer(3)">▶</button>
-              <button class="btn btn-warn btn-sm"    onclick="raceStopTimer(3)">⏹</button>
-              <button class="btn btn-outline btn-sm" onclick="raceResetTimer(3)">↺</button>
-            </div>
-            <div class="form-group"><label>Bot Name</label><input id="race-bot3-name" type="text" placeholder="Leave empty if unused" /></div>
-            <div class="form-group"><label>Team</label><input id="race-bot3-team" type="text" placeholder="Team name" /></div>
-            <div class="form-group"><label>Time (seconds)</label><input id="race-bot3-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
-            <div class="form-group"><label>Status</label><select id="race-bot3-status"><option value="completed">Completed</option><option value="dnf">Did Not Finish</option><option value="disqualified">Disqualified</option></select></div>
-            <button class="btn btn-success btn-full" onclick="raceFinishBot(3)">✅ Finish Lane 3</button>
-            <div id="race-bot3-info" style="text-align:center;margin-top:8px;font-size:0.8rem;color:var(--muted)">Not used</div>
           </div>
         </div>
 
@@ -1391,7 +1407,7 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
             <div class="card-header"><div class="card-header-icon">🏆</div> Final Results</div>
             <div class="table-wrap">
               <table>
-                <thead><tr><th>Pos</th><th>Bot</th><th>Team</th><th>Time</th><th>Status</th><th>Action</th></tr></thead>
+                <thead><tr><th>Pos</th><th>Bot</th><th>Team</th><th>Raw Time</th><th>Penalties</th><th>Final Time</th><th>Status</th><th>Action</th></tr></thead>
                 <tbody id="race-results-body"></tbody>
               </table>
             </div>
@@ -2680,31 +2696,58 @@ async function suRemoveMatch(id){ if(confirm('Remove match?')) await suMatchesCo
 
 // ============================================================
 // =====================  RACING BOTS  ========================
+// 2-Lane Mode with Line-Touch & Swirl-Cut Penalties
 // ============================================================
 const rdb=fbDbs['racing'];
 const rTimerDocs=[null,
   rdb.collection('settings').doc('raceTimer1'),
-  rdb.collection('settings').doc('raceTimer2'),
-  rdb.collection('settings').doc('raceTimer3')
+  rdb.collection('settings').doc('raceTimer2')
 ];
 const rRaceDocs=[null,
   rdb.collection('settings').doc('currentRace1'),
-  rdb.collection('settings').doc('currentRace2'),
-  rdb.collection('settings').doc('currentRace3')
+  rdb.collection('settings').doc('currentRace2')
 ];
 
+// ── Penalty configuration ──
+// Adjust these two constants if the ref wants different penalty weights.
+const RACE_LINE_PENALTY_SEC  = 2;  // seconds added per black-line touch
+const RACE_SWIRL_PENALTY_SEC = 3;  // seconds added per swirl cut
+
+// In-memory penalty tally per lane: { line: n, swirl: n }
+let raceLanePenalties = { 1:{line:0,swirl:0}, 2:{line:0,swirl:0} };
+
+function racePenaltySeconds(lane) {
+  const p = raceLanePenalties[lane] || {line:0,swirl:0};
+  return (p.line*RACE_LINE_PENALTY_SEC) + (p.swirl*RACE_SWIRL_PENALTY_SEC);
+}
+
+function raceUpdatePenaltyDisplay(lane) {
+  const p = raceLanePenalties[lane] || {line:0,swirl:0};
+  const el = document.getElementById(`race-bot${lane}-penalty-info`);
+  if (el) el.textContent = `Line: ${p.line} · Swirl: ${p.swirl} · +${racePenaltySeconds(lane).toFixed(1)}s`;
+}
+
+function racePenalty(lane, type) {
+  if (!raceLanePenalties[lane]) raceLanePenalties[lane] = {line:0,swirl:0};
+  raceLanePenalties[lane][type] = (raceLanePenalties[lane][type]||0) + 1;
+  raceUpdatePenaltyDisplay(lane);
+}
+
+function racePenaltyReset(lane) {
+  raceLanePenalties[lane] = {line:0,swirl:0};
+  raceUpdatePenaltyDisplay(lane);
+}
+
 // ── Firestore doc init ──
-// Always force-writes all 6 docs (3 timer + 3 race) to a known-clean state
+// Always force-writes all timer + race docs for lanes 1-2 to a known-clean state
 // on startup, UNLESS a timer is actively running (live race in progress).
-// This guarantees raceTimer3/currentRace3 are created if missing, and nukes
-// any stale startTime/finalTime that caused the 1700-second "ghost" display.
 async function rInitFirestoreDocs() {
   console.log("Racing Auth State:", fbAuths['racing'].currentUser);
   const timerClean = { running: false, startTime: null, finalTime: null, sessionKey: null };
   const raceClean  = { botName: null, teamName: null, status: 'idle' };
   try {
-    // Process all 3 lanes in parallel for speed
-    await Promise.all([1, 2, 3].map(async lane => {
+    // Process both lanes in parallel for speed
+    await Promise.all([1, 2].map(async lane => {
       // ── Timer doc ──
       const timerSnap = await rTimerDocs[lane].get();
       if (!timerSnap.exists) {
@@ -2740,9 +2783,9 @@ const rBotsCol  = rdb.collection('bots');
 // rTimerIntervals[lane] holds the active setInterval handle.
 // rActiveSessionKey[lane] tracks which sessionKey the running interval was started for,
 // so that server-echo snapshots (same sessionKey, running:true) don't restart the interval.
-let rTimerData       = [null, null, null, null];
-let rTimerIntervals  = [null, null, null, null];
-let rActiveSessionKey= [null, null, null, null];
+let rTimerData       = [null, null, null];
+let rTimerIntervals  = [null, null, null];
+let rActiveSessionKey= [null, null, null];
 
 function rClearInterval(lane) {
   if (rTimerIntervals[lane]) { clearInterval(rTimerIntervals[lane]); rTimerIntervals[lane] = null; }
@@ -2820,10 +2863,11 @@ async function raceStopTimer(lane) {
 async function raceResetTimer(lane) {
   if (!confirm('Reset Lane ' + lane + '?')) return;
   await rTimerDocs[lane].set({ running: false, startTime: null, finalTime: null, sessionKey: null });
+  racePenaltyReset(lane);
 }
 
 async function raceStartAll() {
-  const active = [1, 2, 3].filter(l => !!document.getElementById(`race-bot${l}-name`).value.trim());
+  const active = [1, 2].filter(l => !!document.getElementById(`race-bot${l}-name`).value.trim());
   if (!active.length) { alert('Enter at least one bot name'); return; }
   // Capture a single "now" so all lanes start from the identical millisecond
   const now = firebase.firestore.Timestamp.now();
@@ -2838,37 +2882,55 @@ async function raceFinishBot(lane){
   if(!name){alert('Enter bot name for Lane '+lane);return;}
   if(!confirm(`Finish race for Lane ${lane}?`)) return;
   const team=document.getElementById(`race-bot${lane}-team`).value.trim();
-  const time=parseFloat(document.getElementById(`race-bot${lane}-time`).value);
+  const rawTime=parseFloat(document.getElementById(`race-bot${lane}-time`).value);
   const status=document.getElementById(`race-bot${lane}-status`).value;
-  if(status==='completed'&&(isNaN(time)||time<=0)){alert('Enter valid time');return;}
-  await rFinalCol.add({botName:name,teamName:team,raceTime:status==='completed'?time:null,status,lane,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
-  document.getElementById(`race-bot${lane}-info`).textContent=`✅ ${name} finished`;
-  alert(`Lane ${lane} result saved!`);
+  if(status==='completed'&&(isNaN(rawTime)||rawTime<=0)){alert('Enter valid time');return;}
+  const penalties = raceLanePenalties[lane] || {line:0,swirl:0};
+  const penaltySec = racePenaltySeconds(lane);
+  const finalTime = status==='completed' ? +(rawTime + penaltySec).toFixed(3) : null;
+  await rFinalCol.add({
+    botName:name,teamName:team,
+    rawTime:status==='completed'?rawTime:null,
+    lineTouches:penalties.line||0,
+    swirlCuts:penalties.swirl||0,
+    penaltySeconds:penaltySec,
+    raceTime:finalTime,
+    status,lane,
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  document.getElementById(`race-bot${lane}-info`).textContent=`✅ ${name} finished`+(penaltySec>0?` (+${penaltySec.toFixed(1)}s penalty)`:'');
+  alert(`Lane ${lane} result saved!`+(penaltySec>0?` Penalty added: +${penaltySec.toFixed(1)}s (Line: ${penalties.line}, Swirl: ${penalties.swirl})`:''));
+  racePenaltyReset(lane);
 }
 
 async function raceSaveAll(){
   const results=[];
-  for(let lane=1;lane<=3;lane++){
+  for(let lane=1;lane<=2;lane++){
     const name=document.getElementById(`race-bot${lane}-name`).value.trim();
     if(!name) continue;
     const team=document.getElementById(`race-bot${lane}-team`).value.trim();
-    const time=parseFloat(document.getElementById(`race-bot${lane}-time`).value);
+    const rawTime=parseFloat(document.getElementById(`race-bot${lane}-time`).value);
     const status=document.getElementById(`race-bot${lane}-status`).value;
-    results.push({botName:name,teamName:team,raceTime:status==='completed'?time:null,status,lane});
+    const penalties = raceLanePenalties[lane] || {line:0,swirl:0};
+    const penaltySec = racePenaltySeconds(lane);
+    const finalTime = status==='completed' ? +(rawTime + penaltySec).toFixed(3) : null;
+    results.push({botName:name,teamName:team,rawTime:status==='completed'?rawTime:null,lineTouches:penalties.line||0,swirlCuts:penalties.swirl||0,penaltySeconds:penaltySec,raceTime:finalTime,status,lane});
   }
   if(!results.length){alert('No valid data');return;}
   for(const r of results) await rFinalCol.add({...r,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  results.forEach(r=>racePenaltyReset(r.lane));
   alert(`${results.length} result(s) saved!`);
 }
 
 async function raceClearAll(){
-  if(!confirm('Clear all 3 lanes?')) return;
-  for(let l=1;l<=3;l++){
+  if(!confirm('Clear both lanes?')) return;
+  for(let l=1;l<=2;l++){
     ['name','team','time'].forEach(f=>document.getElementById(`race-bot${l}-${f}`).value='');
     document.getElementById(`race-bot${l}-status`).value='completed';
-    document.getElementById(`race-bot${l}-info`).textContent=l===3?'Not used':'Waiting...';
+    document.getElementById(`race-bot${l}-info`).textContent='Waiting...';
     await rTimerDocs[l].set({startTime:null,running:false,finalTime:null,sessionKey:null});
     await rRaceDocs[l].delete().catch(()=>{});
+    racePenaltyReset(l);
   }
 }
 
@@ -2893,7 +2955,7 @@ async function rLoadBots(){
     const li=document.createElement('li');
     li.innerHTML=`<span class="bot-info-text">${d.botName} (${d.teamName})</span>`;
     const acts=document.createElement('div'); acts.className='btn-actions';
-    [1,2,3].forEach(lane=>{
+    [1,2].forEach(lane=>{
       const btn=document.createElement('button');
       btn.className='btn btn-primary btn-xs'; btn.textContent=`→L${lane}`;
       btn.onclick=()=>{
@@ -2924,9 +2986,11 @@ function rListenFinalResults(){
     sorted.forEach(doc=>{
       const d=doc.data();
       const pd=d.status==='completed'?pos++:'-';
-      const td=d.status==='completed'?d.raceTime?.toFixed(3)+'s':'-';
+      const rawTd=d.status==='completed'?(d.rawTime!=null?d.rawTime.toFixed(3)+'s':'-'):'-';
+      const penaltyTd=(d.lineTouches||d.swirlCuts)?`Line ${d.lineTouches||0} · Swirl ${d.swirlCuts||0} (+${(d.penaltySeconds||0).toFixed(1)}s)`:'—';
+      const finalTd=d.status==='completed'?(d.raceTime!=null?d.raceTime.toFixed(3)+'s':'-'):'-';
       const tr=document.createElement('tr');
-      tr.innerHTML=`<td>${pd}</td><td>${d.botName}</td><td>${d.teamName}</td><td>${td}</td><td>${d.status.toUpperCase()}</td><td><button class="btn btn-danger btn-sm" onclick="rRemoveFinal('${doc.id}')">✕</button></td>`;
+      tr.innerHTML=`<td>${pd}</td><td>${d.botName}</td><td>${d.teamName}</td><td>${rawTd}</td><td style="font-size:0.78rem">${penaltyTd}</td><td><strong>${finalTd}</strong></td><td>${d.status.toUpperCase()}</td><td><button class="btn btn-danger btn-sm" onclick="rRemoveFinal('${doc.id}')">✕</button></td>`;
       tbody.appendChild(tr);
     });
   });
@@ -3858,7 +3922,7 @@ function initAllEventListeners(){
   });
   // Racing — initialise/reset Firestore docs first (clears stale finalTime), then attach listeners
   rInitFirestoreDocs().then(() => {
-    [1,2,3].forEach(l=>rListenTimer(l));
+    [1,2].forEach(l=>rListenTimer(l));
     rListenFinalResults();
     rLoadBots();
   });

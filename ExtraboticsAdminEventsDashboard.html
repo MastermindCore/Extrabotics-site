@@ -967,7 +967,7 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
       Extrabotics Olympiad
     </div>
     <h1>Events Admin Dashboard</h1>
-    <p>Manage all 7 competition categories — matches, results, timers &amp; participant registrations in one place.</p>
+    <p>Manage all 8 competition categories — matches, results, timers &amp; participant registrations in one place.</p>
   </div>
 
   <!-- Page-level Tab Bar -->
@@ -1027,6 +1027,7 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
         <div class="event-tab" onclick="switchTab('maze')"    id="tab-maze"><span>🧩</span> Maze Bots</div>
         <div class="event-tab" onclick="switchTab('balloon')" id="tab-balloon"><span>🎈</span> Balloon Combat</div>
         <div class="event-tab" onclick="switchTab('fire')"    id="tab-fire"><span>🔥</span> Fire Rescue</div>
+        <div class="event-tab" onclick="switchTab('tug')"     id="tab-tug"><span>🪢</span> Tug of War</div>
       </div>
 
       <!-- ===== SOCCER ===== -->
@@ -1828,6 +1829,96 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
         </div>
       </div>
 
+      <!-- ===== TUG OF WAR ===== -->
+      <div id="panel-tug" class="event-panel">
+        <div class="panel-title">
+          <span style="font-size:2rem">🪢</span>
+          <h2>TUG OF WAR</h2>
+          <span class="panel-badge">Single Arena · Best of 3 Pulls</span>
+        </div>
+
+        <div class="arena-card arena-a">
+          <div class="arena-label"><span class="dot"></span> Arena — Current Match</div>
+          <div class="live-box">
+            <div class="live-label"><span class="dot-blink"></span> Live</div>
+            <div class="vs-row">
+              <span class="team" id="tug-team-a-live">—</span>
+              <span class="vs-badge">VS</span>
+              <span class="team" id="tug-team-b-live">—</span>
+            </div>
+            <div style="font-size:0.82rem;color:var(--muted);margin-top:4px" id="tug-status-live">No active match</div>
+          </div>
+          <div class="timer-wrap">
+            <div class="timer-display" id="tug-timer">01:00</div>
+          </div>
+          <div class="btn-group btn-group-center">
+            <button class="btn btn-success btn-sm" onclick="tugStartTimer()">▶ Start</button>
+            <button class="btn btn-warn btn-sm"    onclick="tugPauseTimer()">⏸ Pause</button>
+            <button class="btn btn-outline btn-sm" onclick="tugResetTimer()">↺ Reset</button>
+          </div>
+          <hr class="divider">
+          <div class="form-row">
+            <div class="form-group"><label>Team A</label><input id="tug-teamA" type="text" placeholder="Team A name" /></div>
+            <div class="form-group"><label>Team B</label><input id="tug-teamB" type="text" placeholder="Team B name" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Round</label><input id="tug-round" type="number" min="1" max="3" value="1" /></div>
+            <div class="form-group"><label>Pull Distance (cm)</label><input id="tug-pull-distance" type="number" min="0" placeholder="e.g. 30" /></div>
+          </div>
+          <div class="form-group">
+            <label>Round Winner</label>
+            <select id="tug-round-winner">
+              <option value="">Select Winner</option>
+              <option value="teamA">Team A</option>
+              <option value="teamB">Team B</option>
+              <option value="draw">Draw / No Pull</option>
+            </select>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="tugSetupMatch()">⚙️ Setup Match</button>
+            <button class="btn btn-primary btn-sm" onclick="tugSaveRound()">💾 Save Round</button>
+            <button class="btn btn-success btn-sm" onclick="tugEndMatch()">✅ End Match</button>
+            <button class="btn btn-danger  btn-sm" onclick="tugClearMatch()">Clear</button>
+          </div>
+          <div class="penalty-info" id="tug-match-score">Round Wins — Team A: 0 · Team B: 0</div>
+        </div>
+
+        <div class="two-col gap-top">
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">👥</div> Team Registration</div>
+            <div class="form-row">
+              <div class="form-group"><label>Team Name</label><input id="tug-new-team" type="text" placeholder="Enter team name" /></div>
+              <div style="display:flex;align-items:flex-end;padding-bottom:1px">
+                <button class="btn btn-success" onclick="tugAddTeam()">+ Add Team</button>
+              </div>
+            </div>
+            <div class="reg-teams-panel">
+              <div class="rtp-header">📋 Registered Teams — click to load</div>
+              <ul class="item-list rtp-list" id="tug-teams-list"></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🏆</div> Leaderboard</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Rank</th><th>Team</th><th>W</th><th>L</th><th>D</th><th>Rounds Won</th></tr></thead>
+                <tbody id="tug-leaderboard-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="card gap-top">
+          <div class="card-header"><div class="card-header-icon">🏆</div> Final Match Results</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Team A</th><th>Team B</th><th>Rounds (A-B)</th><th>Winner</th><th>Action</th></tr></thead>
+              <tbody id="tug-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
     </div><!-- /admin-main -->
   </div><!-- /dashboard-section -->
 
@@ -1899,6 +1990,9 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
             <div class="category-chip" onclick="toggleCategory(this,'fire')" data-cat="fire">
               <span class="chip-icon">🔥</span><span class="chip-name">Fire Rescue</span>
             </div>
+            <div class="category-chip" onclick="toggleCategory(this,'tug')" data-cat="tug">
+              <span class="chip-icon">🪢</span><span class="chip-name">Tug of War</span>
+            </div>
           </div>
         </div>
 
@@ -1937,6 +2031,7 @@ hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
             <option value="maze">🧩 Maze Bots</option>
             <option value="balloon">🎈 Balloon Combat</option>
             <option value="fire">🔥 Fire Rescue</option>
+            <option value="tug">🪢 Tug of War</option>
           </select>
           <button class="btn btn-outline btn-sm" onclick="loadRegistered()">↻ Refresh</button>
         </div>
@@ -2026,6 +2121,11 @@ Object.entries(FIREBASE_CONFIGS).forEach(([name,config]) => {
 fbApps['fire']  = fbApps['soccer'];
 fbDbs['fire']   = fbDbs['soccer'];
 fbAuths['fire'] = fbAuths['soccer'];
+
+// Tug of War shares Maze Bots' project (no new Firebase project needed)
+fbApps['tug']  = fbApps['maze'];
+fbDbs['tug']   = fbDbs['maze'];
+fbAuths['tug'] = fbAuths['maze'];
 
 let currentUser = null;
 let currentTab  = 'soccer';
@@ -3903,6 +4003,226 @@ function frListenResults(){
 async function frRemoveResult(id){ if(confirm('Remove?')) await frResultsCol.doc(id).delete(); }
 
 // ============================================================
+// ===================  TUG OF WAR  ============================
+// Shares the Maze Bots Firebase project (see fbDbs['tug'] above)
+// ============================================================
+const tdb = fbDbs['tug'];
+const tTimerDoc       = tdb.collection('tugSettings').doc('matchTimer');
+const tMatchDoc       = tdb.collection('tugSettings').doc('currentMatch');
+const tResultsCol     = tdb.collection('tugResults');
+const tTeamsCol       = tdb.collection('tugTeams');
+const tLeaderboardCol = tdb.collection('tugLeaderboard');
+const TUG_DURATION = 60; // seconds per pull — adjust here if refs want a longer pull window
+let tTimerData = null, tTimerInterval = null;
+// In-memory round-win tally for the match currently in progress (best of 3)
+let tRoundWins = { teamA: 0, teamB: 0 };
+
+function tListenTimer(){
+  tTimerDoc.onSnapshot(doc=>{
+    tTimerData = doc.exists ? doc.data() : null;
+    const el = document.getElementById('tug-timer');
+    if(!el) return;
+    if(tTimerData?.running){
+      el.classList.add('running');
+      if(tTimerInterval) clearInterval(tTimerInterval);
+      tTimerInterval = setInterval(()=>{
+        const elapsed = (Date.now()-tTimerData.startTime.toMillis())/1000 + (tTimerData.pausedAt||0);
+        const rem = Math.max(0, TUG_DURATION - elapsed);
+        const e2 = document.getElementById('tug-timer');
+        e2.textContent = fmtCountdown(rem);
+        e2.classList.toggle('urgent', rem<=10 && rem>0);
+        if(rem<=0){ clearInterval(tTimerInterval); document.getElementById('tug-status-live').textContent='⏰ Time Expired!'; }
+      },500);
+    } else {
+      if(tTimerInterval) clearInterval(tTimerInterval);
+      el.classList.remove('running');
+      const rem = tTimerData ? Math.max(0, TUG_DURATION-(tTimerData.pausedAt||0)) : TUG_DURATION;
+      el.textContent = fmtCountdown(rem);
+    }
+  });
+}
+
+async function tugStartTimer(){
+  const now = firebase.firestore.Timestamp.now();
+  const pausedAt = tTimerData?.pausedAt || 0;
+  await tTimerDoc.set({ startTime: now, running: true, pausedAt });
+  document.getElementById('tug-status-live').textContent = '🪢 Pull In Progress';
+}
+async function tugPauseTimer(){
+  if(!tTimerData?.running) return;
+  const elapsed = (Date.now()-tTimerData.startTime.toMillis())/1000 + (tTimerData.pausedAt||0);
+  await tTimerDoc.set({...tTimerData, running:false, pausedAt:elapsed});
+  document.getElementById('tug-status-live').textContent = '⏸ Paused';
+}
+async function tugResetTimer(){
+  if(!confirm('Reset Tug of War timer?')) return;
+  await tTimerDoc.set({ startTime:null, running:false, pausedAt:0 });
+  document.getElementById('tug-status-live').textContent = 'No active match';
+}
+
+function tUpdateScoreDisplay(){
+  const el = document.getElementById('tug-match-score');
+  if(el) el.textContent = `Round Wins — Team A: ${tRoundWins.teamA} · Team B: ${tRoundWins.teamB}`;
+}
+
+async function tugSetupMatch(){
+  const teamA = document.getElementById('tug-teamA').value.trim();
+  const teamB = document.getElementById('tug-teamB').value.trim();
+  if(!teamA||!teamB){ alert('Enter both team names'); return; }
+  tRoundWins = { teamA:0, teamB:0 };
+  await tMatchDoc.set({ teamA, teamB, round:1, updatedAt: firebase.firestore.FieldValue.serverTimestamp() });
+  document.getElementById('tug-team-a-live').textContent = teamA;
+  document.getElementById('tug-team-b-live').textContent = teamB;
+  document.getElementById('tug-status-live').textContent = 'Ready — Round 1';
+  document.getElementById('tug-round').value = 1;
+  tUpdateScoreDisplay();
+  alert('Match set up — best of 3 pulls!');
+}
+
+async function tugSaveRound(){
+  const teamA = document.getElementById('tug-teamA').value.trim();
+  const teamB = document.getElementById('tug-teamB').value.trim();
+  const winner = document.getElementById('tug-round-winner').value;
+  const round = parseInt(document.getElementById('tug-round').value)||1;
+  if(!teamA||!teamB){ alert('Setup the match first'); return; }
+  if(!winner){ alert('Select the round winner'); return; }
+  if(winner==='teamA') tRoundWins.teamA++;
+  else if(winner==='teamB') tRoundWins.teamB++;
+  tUpdateScoreDisplay();
+  document.getElementById('tug-status-live').textContent = `Round ${round} complete — ${winner==='draw'?'Draw':(winner==='teamA'?teamA:teamB)+' won'}`;
+  document.getElementById('tug-round').value = round+1;
+  document.getElementById('tug-pull-distance').value = '';
+  document.getElementById('tug-round-winner').value = '';
+  await tMatchDoc.set({ teamA, teamB, round:round+1, updatedAt: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true});
+}
+
+async function tugEndMatch(){
+  const teamA = document.getElementById('tug-teamA').value.trim();
+  const teamB = document.getElementById('tug-teamB').value.trim();
+  if(!teamA||!teamB){ alert('Setup the match first'); return; }
+  if(!confirm('End the match and record the final result?')) return;
+  const winner = tRoundWins.teamA>tRoundWins.teamB ? teamA : tRoundWins.teamB>tRoundWins.teamA ? teamB : 'Draw';
+  await tResultsCol.add({
+    teamA, teamB,
+    roundsA: tRoundWins.teamA, roundsB: tRoundWins.teamB,
+    winner,
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  });
+  await tUpdateLeaderboard(teamA, teamB, winner);
+  await tMatchDoc.delete();
+  alert('Match result saved! Winner: '+winner);
+  tugClearMatch();
+}
+
+async function tUpdateLeaderboard(teamA, teamB, winner){
+  for(const [name, isWinner, isDraw] of [
+    [teamA, winner===teamA, winner==='Draw'],
+    [teamB, winner===teamB, winner==='Draw']
+  ]){
+    const ex = await tLeaderboardCol.where('teamName','==',name).get();
+    const roundsForTeam = name===teamA ? tRoundWins.teamA : tRoundWins.teamB;
+    if(ex.empty){
+      await tLeaderboardCol.add({
+        teamName:name,
+        wins:isWinner?1:0, losses:(!isWinner&&!isDraw)?1:0, draws:isDraw?1:0,
+        roundsWon: roundsForTeam,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      const cd = ex.docs[0].data();
+      await ex.docs[0].ref.update({
+        wins: cd.wins+(isWinner?1:0),
+        losses: cd.losses+((!isWinner&&!isDraw)?1:0),
+        draws: (cd.draws||0)+(isDraw?1:0),
+        roundsWon: (cd.roundsWon||0)+roundsForTeam,
+        lastUpdated: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  }
+}
+
+async function tugClearMatch(){
+  document.getElementById('tug-teamA').value='';
+  document.getElementById('tug-teamB').value='';
+  document.getElementById('tug-round').value=1;
+  document.getElementById('tug-pull-distance').value='';
+  document.getElementById('tug-round-winner').value='';
+  document.getElementById('tug-team-a-live').textContent='—';
+  document.getElementById('tug-team-b-live').textContent='—';
+  document.getElementById('tug-status-live').textContent='No active match';
+  tRoundWins = {teamA:0, teamB:0};
+  tUpdateScoreDisplay();
+  await tMatchDoc.delete().catch(()=>{});
+}
+
+async function tugAddTeam(){
+  const name = document.getElementById('tug-new-team').value.trim();
+  if(!name) return alert('Enter team name');
+  const snap = await tTeamsCol.where('name','==',name).get();
+  if(!snap.empty) return alert('Team already registered');
+  await tTeamsCol.add({ name, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+  document.getElementById('tug-new-team').value='';
+  tLoadTeams();
+}
+
+async function tLoadTeams(){
+  const snap = await tTeamsCol.get();
+  const ul = document.getElementById('tug-teams-list');
+  ul.innerHTML='';
+  snap.forEach(doc=>{
+    const d = doc.data();
+    // Support both registration-saved docs (teamName field) and manually-added docs (name field)
+    const displayName = d.teamName || d.name || '(unknown)';
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="bot-info-text">${displayName}${d.botName?` — <em style="color:var(--muted);font-size:0.8em">${d.botName}</em>`:''}</span>`;
+    const acts = document.createElement('div'); acts.className='btn-actions';
+    const btn = document.createElement('button');
+    btn.className='btn btn-primary btn-xs'; btn.textContent='→Team A'; btn.title='Load as Team A';
+    btn.onclick = ()=>{ document.getElementById('tug-teamA').value = displayName; };
+    acts.appendChild(btn);
+    const btn2 = document.createElement('button');
+    btn2.className='btn btn-teal btn-xs'; btn2.textContent='→Team B'; btn2.title='Load as Team B';
+    btn2.onclick = ()=>{ document.getElementById('tug-teamB').value = displayName; };
+    acts.appendChild(btn2);
+    const rbtn = document.createElement('button');
+    rbtn.className='btn btn-danger btn-xs'; rbtn.textContent='✕';
+    rbtn.onclick = async()=>{ if(confirm(`Remove "${displayName}"?`)){ await tTeamsCol.doc(doc.id).delete(); tLoadTeams(); } };
+    acts.appendChild(rbtn);
+    li.appendChild(acts); ul.appendChild(li);
+  });
+}
+
+function tListenResults(){
+  tResultsCol.orderBy('timestamp','desc').onSnapshot(snap=>{
+    const tbody = document.getElementById('tug-results-body');
+    tbody.innerHTML='';
+    let n = snap.size;
+    snap.forEach(doc=>{
+      const d = doc.data();
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>${n--}</td><td>${d.teamA}</td><td>${d.teamB}</td><td>${d.roundsA} - ${d.roundsB}</td><td><b>${d.winner}</b></td><td><button class="btn btn-danger btn-sm" onclick="tRemoveResult('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+  tLeaderboardCol.onSnapshot(snap=>{
+    const sorted = snap.docs.slice().sort((a,b)=>{
+      const da=a.data(), db=b.data();
+      return db.wins!==da.wins ? db.wins-da.wins : (db.roundsWon||0)-(da.roundsWon||0);
+    });
+    const tbody = document.getElementById('tug-leaderboard-body');
+    tbody.innerHTML='';
+    sorted.forEach((doc,i)=>{
+      const d = doc.data();
+      const tr = document.createElement('tr');
+      if(i===0)tr.classList.add('position-1');else if(i===1)tr.classList.add('position-2');else if(i===2)tr.classList.add('position-3');
+      tr.innerHTML = `<td>${i+1}</td><td>${d.teamName}</td><td>${d.wins}</td><td>${d.losses}</td><td>${d.draws||0}</td><td>${d.roundsWon||0}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+async function tRemoveResult(id){ if(confirm('Remove result?')) await tResultsCol.doc(id).delete(); }
+
+// ============================================================
 // INIT ALL LISTENERS  —  called once after login
 // ============================================================
 let listenersInitialized=false;
@@ -3940,6 +4260,8 @@ function initAllEventListeners(){
   });
   // Fire
   frListenTimer(); frListenResults(); frLoadBots();
+  // Tug of War
+  tListenTimer(); tListenResults(); tLoadTeams();
 }
 
 // ============================================================
@@ -3947,7 +4269,8 @@ function initAllEventListeners(){
 // ============================================================
 const CATEGORY_LABELS={
   soccer:'⚽ Soccerbots',sumo:'🤼 Sumo Bots',racing:'🏎️ Racing Bots',
-  battle:'⚔️ BattleBots',maze:'🧩 Maze Bots',balloon:'🎈 Balloon Combat',fire:'🔥 Fire Rescue'
+  battle:'⚔️ BattleBots',maze:'🧩 Maze Bots',balloon:'🎈 Balloon Combat',fire:'🔥 Fire Rescue',
+  tug:'🪢 Tug of War'
 };
 function getRegCollection(cat){
   const colMap={
@@ -3957,7 +4280,8 @@ function getRegCollection(cat){
     battle:()=>fbDbs['battle'].collection('battlebots'),
     maze:()=>fbDbs['maze'].collection('mazeBots'),
     balloon:()=>fbDbs['balloon'].collection('balloon-bots'),
-    fire:()=>fbDbs['fire'].collection('fireBots')
+    fire:()=>fbDbs['fire'].collection('fireBots'),
+    tug:()=>fbDbs['tug'].collection('tugTeams')
   };
   return colMap[cat]?colMap[cat]():null;
 }

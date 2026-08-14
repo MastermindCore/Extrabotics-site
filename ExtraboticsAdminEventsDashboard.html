@@ -2318,8 +2318,11 @@ function sListenTimer(arena) {
 }
 
 async function soccerStartTimer(arena) {
-  const now = firebase.firestore.Timestamp.now();
-  await sTimerDocs[arena].set({ startTime:now, running:true, pausedAt: sTimerData[arena]?.pausedAt||0 });
+  await sTimerDocs[arena].set({
+    startTime: firebase.firestore.FieldValue.serverTimestamp(),
+    running: true,
+    pausedAt: sTimerData[arena]?.pausedAt || 0
+  });
 }
 async function soccerPauseTimer(arena) {
   const d = sTimerData[arena];
@@ -2560,20 +2563,20 @@ function suListenTimer(ring) {
 }
 
 async function sumoStartTimer(ring) {
-  // Guard: don't overwrite if already running (prevents double-click / reconnect reset)
   if(suTimerData[ring]?.running) return;
-  // Generate a unique sessionKey so server-confirmation snapshots can be identified
-  // and won't incorrectly trigger an interval restart.
   const sessionKey = Date.now().toString(36) + '-' + ring;
-  await suTimerDocs[ring].set({startTime:firebase.firestore.Timestamp.now(),running:true,finalTime:null,sessionKey});
+  await suTimerDocs[ring].set({
+    startTime: firebase.firestore.FieldValue.serverTimestamp(),
+    running: true, finalTime: null, sessionKey
+  });
 }
+
 async function sumoStopTimer(ring) {
-  const d=suTimerData[ring];
-  if(!d?.running) return;
-  const ft=Date.now()-d.startTime.toMillis();
-  // Spread existing data (preserves sessionKey and any other fields) then override
+  const d = suTimerData[ring];
+  if (!d?.running || !d?.startTime) return;   // ← added startTime guard
+  const ft = Date.now() - d.startTime.toMillis();
   await suTimerDocs[ring].set({...d, running:false, finalTime:ft});
-  document.getElementById(`sumo-ring${ring}-duration`).value=(ft/1000).toFixed(1);
+  document.getElementById(`sumo-ring${ring}-duration`).value = (ft/1000).toFixed(1);
 }
 async function sumoResetTimer(ring) {
   if(!confirm('Reset Ring '+ring+' timer?')) return;
@@ -2935,29 +2938,37 @@ function rListenTimer(lane) {
 }
 
 async function raceStartTimer(lane) {
-  // Generate a unique session key so the listener can detect a genuine new start
   const sessionKey = Date.now().toString(36) + Math.random().toString(36).slice(2) + '-' + lane;
-  // Always write a brand-new Timestamp.now() — never reuse any previous startTime
   await rTimerDocs[lane].set({
     running: true,
-    startTime: firebase.firestore.Timestamp.now(),
+    startTime: firebase.firestore.FieldValue.serverTimestamp(),
     finalTime: null,
     sessionKey
   });
 }
 
+async function raceStartAll() {
+  const active = [1, 2].filter(l => !!document.getElementById(`race-bot${l}-name`).value.trim());
+  if (!active.length) { alert('Enter at least one bot name'); return; }
+  const batch = rdb.batch();
+  active.forEach(l => {
+    const sessionKey = Date.now().toString(36) + Math.random().toString(36).slice(2) + '-' + l;
+    batch.set(rTimerDocs[l], {
+      running: true,
+      startTime: firebase.firestore.FieldValue.serverTimestamp(),
+      finalTime: null,
+      sessionKey
+    });
+  });
+  await batch.commit();
+}
+
 async function raceStopTimer(lane) {
   const d = rTimerData[lane];
-  if (!d?.running) return;
-  // Calculate elapsed from the startTime stored in the snapshot we already have
+  if (!d?.running || !d?.startTime) return;   // ← added startTime guard
   const ft = Date.now() - d.startTime.toMillis();
-  await rTimerDocs[lane].set({
-    running: false,
-    startTime: d.startTime,   // keep for reference
-    finalTime: ft,
-    sessionKey: d.sessionKey || null
-  });
-  document.getElementById(`race-bot${lane}-time`).value = (ft / 1000).toFixed(3);
+  await rTimerDocs[lane].set({ running:false, startTime:d.startTime, finalTime:ft, sessionKey:d.sessionKey||null });
+  document.getElementById(`race-bot${lane}-time`).value = (ft/1000).toFixed(3);
 }
 
 async function raceResetTimer(lane) {
@@ -3167,11 +3178,39 @@ function bListenTimer(){
   });
 }
 
-async function battleStartTimer(){ await bTimerDoc.set({startTime:firebase.firestore.Timestamp.now(),running:true,remainingTime:BATTLE_DURATION}); }
+async function battleStartTimer(){
+  await bTimerDoc.set({ startTime: firebase.firestore.FieldValue.serverTimestamp(), running:true, remainingTime:BATTLE_DURATION });
+}
+
 async function battlePauseTimer(){
-  if(!bTimerData?.running) return;
+  if(!bTimerData?.running || !bTimerData?.startTime) return;   // ← added guard
   const rem=BATTLE_DURATION-(Date.now()-bTimerData.startTime.toMillis())/1000;
   await bTimerDoc.set({startTime:null,running:false,remainingTime:Math.max(0,rem)});
+}
+
+function bListenTimer(){
+  bTimerDoc.onSnapshot(doc=>{
+    bTimerData=doc.exists?doc.data():null;
+    const el=document.getElementById('battle-timer');
+    if(!el) return;
+    if(bTimerData?.running && bTimerData?.startTime){        // ← added startTime check
+      el.classList.add('running');
+      if(bTimerInterval) clearInterval(bTimerInterval);
+      const startMs = bTimerData.startTime.toMillis();        // ← captured once, not re-read each tick
+      bTimerInterval=setInterval(()=>{
+        const elapsed=(Date.now()-startMs)/1000;
+        const rem=Math.max(0,BATTLE_DURATION-elapsed);
+        const e2=document.getElementById('battle-timer');
+        e2.textContent=fmtCountdown(rem);
+        e2.classList.toggle('urgent',rem<=30&&rem>0);
+        if(rem<=0) clearInterval(bTimerInterval);
+      },500);
+    } else {
+      if(bTimerInterval) clearInterval(bTimerInterval);
+      el.classList.remove('running');
+      el.textContent=bTimerData?.remainingTime!=null?fmtCountdown(bTimerData.remainingTime):fmtCountdown(BATTLE_DURATION);
+    }
+  });
 }
 async function battleResetTimer(){
   if(!confirm('Reset timer?')) return;
@@ -3353,12 +3392,35 @@ function mListenTimer(){
   });
 }
 
-async function mazeStartTimer(){ await mTimerDoc.set({startTime:firebase.firestore.Timestamp.now(),running:true,finalTime:null}); }
+async function mazeStartTimer(){
+  await mTimerDoc.set({ startTime: firebase.firestore.FieldValue.serverTimestamp(), running:true, finalTime:null });
+}
+
 async function mazeStopTimer(){
-  if(!mTimerData?.running) return;
+  if(!mTimerData?.running || !mTimerData?.startTime) return;   // ← added guard
   const ft=Date.now()-mTimerData.startTime.toMillis();
   await mTimerDoc.set({...mTimerData,running:false,finalTime:ft});
   document.getElementById('maze-run-time').value=(ft/1000).toFixed(3);
+}
+
+function mListenTimer(){
+  mTimerDoc.onSnapshot(doc=>{
+    mTimerData=doc.exists?doc.data():null;
+    const el=document.getElementById('maze-timer');
+    if(!el) return;
+    if(mTimerData?.running && mTimerData?.startTime){          // ← added check
+      el.classList.add('running');
+      if(mTimerInterval) clearInterval(mTimerInterval);
+      const startMs = mTimerData.startTime.toMillis();
+      mTimerInterval=setInterval(()=>{
+        document.getElementById('maze-timer').textContent=fmtTime(Date.now()-startMs);
+      },10);
+    } else {
+      if(mTimerInterval) clearInterval(mTimerInterval);
+      el.classList.remove('running');
+      el.textContent=mTimerData?.finalTime?fmtTime(mTimerData.finalTime):'00:00.000';
+    }
+  });
 }
 async function mazeResetTimer(){
   if(!confirm('Reset timer?')) return;
@@ -3615,9 +3677,34 @@ function blCalcElapsed(){ return (!blTimerData?.startTime||!blTimerData?.running
 
 async function balloonStartMatch(){
   if(!blRoundBots.length){alert('Setup a round with bots first');return;}
-  await blTimerDoc.set({startTime:firebase.firestore.Timestamp.now(),running:true,remainingTime:BALLOON_DURATION});
+  await blTimerDoc.set({ startTime: firebase.firestore.FieldValue.serverTimestamp(), running:true, remainingTime:BALLOON_DURATION });
   await blRoundDoc.set({...await blRoundDoc.get().then(d=>d.data()), active:true, startedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
   document.getElementById('balloon-match-status').textContent='⚔️ Round In Progress!';
+}
+
+function blListenTimer(){
+  blTimerDoc.onSnapshot(doc=>{
+    blTimerData=doc.exists?doc.data():null;
+    const el=document.getElementById('balloon-timer');
+    if(!el) return;
+    if(blTimerData?.running && blTimerData?.startTime){        // ← added check
+      el.classList.add('running');
+      if(blTimerInterval) clearInterval(blTimerInterval);
+      const startMs = blTimerData.startTime.toMillis();
+      blTimerInterval=setInterval(()=>{
+        const elapsed=(Date.now()-startMs)/1000;
+        const rem=Math.max(0,BALLOON_DURATION-elapsed);
+        const e2=document.getElementById('balloon-timer');
+        e2.textContent=fmtCountdown(rem);
+        e2.classList.toggle('urgent',rem<=30&&rem>0);
+        if(rem<=0){clearInterval(blTimerInterval);document.getElementById('balloon-match-status').textContent='⏰ Time Expired!';}
+      },500);
+    } else {
+      if(blTimerInterval) clearInterval(blTimerInterval);
+      el.classList.remove('running');
+      el.textContent=blTimerData?.remainingTime!=null?fmtCountdown(blTimerData.remainingTime):fmtCountdown(BALLOON_DURATION);
+    }
+  });
 }
 async function balloonPauseMatch(){
   if(!blTimerData?.running) return;
@@ -3843,16 +3930,43 @@ function frListenTimer(){
 }
 
 async function fireStartTimer(){
-  const now=firebase.firestore.Timestamp.now();
   const pausedAt=frTimerData?.pausedAt||0;
-  await frTimerDoc.set({startTime:now,running:true,pausedAt});
+  await frTimerDoc.set({ startTime: firebase.firestore.FieldValue.serverTimestamp(), running:true, pausedAt });
   document.getElementById('fire-match-status').textContent='🔥 Match In Progress';
 }
+
 async function firePauseTimer(){
-  if(!frTimerData?.running) return;
+  if(!frTimerData?.running || !frTimerData?.startTime) return;   // ← added guard
   const elapsed=(Date.now()-frTimerData.startTime.toMillis())/1000+(frTimerData.pausedAt||0);
   await frTimerDoc.set({...frTimerData,running:false,pausedAt:elapsed});
   document.getElementById('fire-match-status').textContent='⏸ Paused';
+}
+
+function frListenTimer(){
+  frTimerDoc.onSnapshot(doc=>{
+    frTimerData=doc.exists?doc.data():null;
+    const el=document.getElementById('fire-timer');
+    if(!el) return;
+    if(frTimerData?.running && frTimerData?.startTime){          // ← added check
+      el.classList.add('running');
+      if(frTimerInterval) clearInterval(frTimerInterval);
+      const startMs = frTimerData.startTime.toMillis();
+      const pausedAt = frTimerData.pausedAt || 0;
+      frTimerInterval=setInterval(()=>{
+        const elapsed=(Date.now()-startMs)/1000+pausedAt;
+        const rem=Math.max(0,FIRE_DURATION-elapsed);
+        const e2=document.getElementById('fire-timer');
+        e2.textContent=fmtCountdown(rem);
+        e2.classList.toggle('urgent',rem<=30&&rem>0);
+        if(rem<=0){clearInterval(frTimerInterval);document.getElementById('fire-match-status').textContent='⏰ Time Expired!';}
+      },500);
+    } else {
+      if(frTimerInterval) clearInterval(frTimerInterval);
+      el.classList.remove('running');
+      const rem=frTimerData?Math.max(0,FIRE_DURATION-(frTimerData.pausedAt||0)):FIRE_DURATION;
+      el.textContent=fmtCountdown(rem);
+    }
+  });
 }
 async function fireResetTimer(){
   if(!confirm('Reset fire match timer?')) return;
@@ -4043,16 +4157,43 @@ function tListenTimer(){
 }
 
 async function tugStartTimer(){
-  const now = firebase.firestore.Timestamp.now();
   const pausedAt = tTimerData?.pausedAt || 0;
-  await tTimerDoc.set({ startTime: now, running: true, pausedAt });
+  await tTimerDoc.set({ startTime: firebase.firestore.FieldValue.serverTimestamp(), running: true, pausedAt });
   document.getElementById('tug-status-live').textContent = '🪢 Pull In Progress';
 }
+
 async function tugPauseTimer(){
-  if(!tTimerData?.running) return;
+  if(!tTimerData?.running || !tTimerData?.startTime) return;   // ← added guard
   const elapsed = (Date.now()-tTimerData.startTime.toMillis())/1000 + (tTimerData.pausedAt||0);
   await tTimerDoc.set({...tTimerData, running:false, pausedAt:elapsed});
   document.getElementById('tug-status-live').textContent = '⏸ Paused';
+}
+
+function tListenTimer(){
+  tTimerDoc.onSnapshot(doc=>{
+    tTimerData = doc.exists ? doc.data() : null;
+    const el = document.getElementById('tug-timer');
+    if(!el) return;
+    if(tTimerData?.running && tTimerData?.startTime){          // ← added check
+      el.classList.add('running');
+      if(tTimerInterval) clearInterval(tTimerInterval);
+      const startMs = tTimerData.startTime.toMillis();
+      const pausedAt = tTimerData.pausedAt || 0;
+      tTimerInterval = setInterval(()=>{
+        const elapsed = (Date.now()-startMs)/1000 + pausedAt;
+        const rem = Math.max(0, TUG_DURATION - elapsed);
+        const e2 = document.getElementById('tug-timer');
+        e2.textContent = fmtCountdown(rem);
+        e2.classList.toggle('urgent', rem<=10 && rem>0);
+        if(rem<=0){ clearInterval(tTimerInterval); document.getElementById('tug-status-live').textContent='⏰ Time Expired!'; }
+      },500);
+    } else {
+      if(tTimerInterval) clearInterval(tTimerInterval);
+      el.classList.remove('running');
+      const rem = tTimerData ? Math.max(0, TUG_DURATION-(tTimerData.pausedAt||0)) : TUG_DURATION;
+      el.textContent = fmtCountdown(rem);
+    }
+  });
 }
 async function tugResetTimer(){
   if(!confirm('Reset Tug of War timer?')) return;

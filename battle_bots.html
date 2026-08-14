@@ -1,0 +1,892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" href="/logo.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BattleBot Results - Extrabotics</title>
+<link rel="stylesheet" href="styles.css">
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyBFvK_ksB1PJJuoqzFZOlWO4RK8I6HlFd4",
+    authDomain: "battlebots-extrabotics.firebaseapp.com",
+    projectId: "battlebots-extrabotics",
+    storageBucket: "battlebots-extrabotics.firebasestorage.app",
+    messagingSenderId: "1064802523524",
+    appId: "1:1064802523524:web:2c44d97a7d96d60f7a25d1",
+    measurementId: "G-B073W5K29R"
+  };
+</script>
+</head>
+<body>
+<!-- Floating Tech Elements -->
+<div class="floating-elements">
+  <div class="tech-particle" style="top: 20%; left: 10%; animation-delay: 0s;">⚙️</div>
+  <div class="tech-particle" style="top: 60%; right: 15%; animation-delay: 2s;">🔧</div>
+  <div class="tech-particle" style="top: 40%; left: 80%; animation-delay: 4s;">💾</div>
+  <div class="tech-particle" style="top: 80%; left: 20%; animation-delay: 1s;">🖥️</div>
+  <div class="tech-particle" style="top: 30%; right: 5%; animation-delay: 3s;">📊</div>
+  <div class="tech-particle" style="top: 70%; right: 25%; animation-delay: 5s;">🔬</div>
+</div>
+
+<!-- Matrix Background -->
+<div class="matrix-bg">
+  <canvas id="matrix-canvas"></canvas>
+</div>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="#" class="logo glitch-effect">Extrabotics</a>
+    <ul class="nav-menu">
+      <li><a href="index" class="nav-link">Home</a></li>
+      <li><a href="about" class="nav-link">About</a></li>
+      <li><a href="events" class="nav-link">Events</a></li>
+      <li><a href="#" class="nav-link active">BattleBot Results</a></li>
+      <li><a href="contact" class="nav-link">Contact Us</a></li>
+      <li><a href="login" class="nav-link">Academy</a></li>
+
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="about-hero">
+  <div class="container">
+    <h1 class="fade-in-up">BattleBots Results</h1>
+    <p class="fade-in-up" style="animation-delay: 0.3s;">
+      Track live battles and judge bot performances in real-time.
+    </p>
+  </div>
+</section>
+
+<main class="container2">
+
+<!-- Match Timer -->
+<div style="text-align: center; margin: 30px 0;">
+  <h2>Match Timer</h2>
+  <div id="match-timer" class="timer-display" style="font-size: 4rem;">03:00</div>
+  <div id="timer-controls" style="margin-top: 20px; display: none;">
+    <button onclick="startMatchTimer()" class="btn-primary">Start Match</button>
+    <button onclick="pauseMatchTimer()" class="btn-secondary">Pause</button>
+    <button onclick="resetMatchTimer()" class="btn-secondary">Reset</button>
+  </div>
+</div>
+
+<!-- Live Match Display -->
+<div id="live-match-box" class="live-match-display">
+  <h2>Current Match</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+    <div class="race-bot-card">
+      <h3>🤖 Bot 1</h3>
+      <p id="bot1-live-name">Waiting...</p>
+      <p id="bot1-live-team"></p>
+    </div>
+    <div class="race-bot-card">
+      <h3>🤖 Bot 2</h3>
+      <p id="bot2-live-name">Waiting...</p>
+      <p id="bot2-live-team"></p>
+    </div>
+  </div>
+</div>
+
+<div id="user-info" class="user-info"></div>
+
+<!-- Login Form -->
+<div id="login-form" class="login-form">
+  <h3>Judge Login</h3>
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
+  <button onclick="login()">Log In</button>
+</div>
+
+<!-- Bot Registration -->
+<div id="bot-registration" class="match-editor" style="display:none;">
+  <h3>BattleBot Registration</h3>
+  <input id="new-bot" type="text" placeholder="Enter bot name" />
+  <input id="bot-team" type="text" placeholder="Enter team name" />
+  <button onclick="addBot()">Add Bot</button>
+  
+  <h4>Registered BattleBots</h4>
+  <ul id="bots-list"></ul>
+</div>
+
+<!-- Match Setup & Judging -->
+<div id="match-editor" class="match-editor" style="display:none;">
+  <h3>⚔️ Battle Match Judging</h3>
+  
+  <!-- Match Setup -->
+  <div style="background: rgba(50, 130, 184, 0.1); padding: 20px; border-radius: 10px; margin-bottom: 30px;">
+    <h4>Match Setup</h4>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div>
+        <label>Bot 1 Name:</label>
+        <input id="match-bot1-name" type="text" placeholder="Bot 1" disabled />
+        <label>Bot 1 Team:</label>
+        <input id="match-bot1-team" type="text" placeholder="Team 1" disabled />
+      </div>
+      <div>
+        <label>Bot 2 Name:</label>
+        <input id="match-bot2-name" type="text" placeholder="Bot 2" disabled />
+        <label>Bot 2 Team:</label>
+        <input id="match-bot2-team" type="text" placeholder="Team 2" disabled />
+      </div>
+    </div>
+    <div style="margin-top: 20px;">
+      <label>Match Result:</label>
+      <select id="match-result" disabled>
+        <option value="">Select Result</option>
+        <option value="bot1-ko">Bot 1 Wins (KO)</option>
+        <option value="bot2-ko">Bot 2 Wins (KO)</option>
+        <option value="judges">Judges Decision</option>
+        <option value="draw">Draw</option>
+      </select>
+    </div>
+    <button onclick="setCurrentMatch()" class="btn-primary" style="margin-top: 15px;">Update Live Match</button>
+  </div>
+
+  <!-- Judging Scores -->
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px;">
+    <!-- Bot 1 Scoring -->
+    <div style="border: 2px solid; padding: 20px; border-radius: 10px;">
+      <h4 style="text-align: center;">🤖 Bot 1 Scores</h4>
+      
+      <div class="input-group">
+        <label>Damage (0-5 points):</label>
+        <input id="bot1-damage" type="number" min="0" max="5" step="1" value="0" disabled />
+        <small>Impact, destruction caused to opponent</small>
+      </div>
+      
+      <div class="input-group">
+        <label>Aggression (0-3 points):</label>
+        <input id="bot1-aggression" type="number" min="0" max="3" step="1" value="0" disabled />
+        <small>Controlled attacks, forward movement</small>
+      </div>
+      
+      <div class="input-group">
+        <label>Control (0-3 points):</label>
+        <input id="bot1-control" type="number" min="0" max="3" step="1" value="0" disabled />
+        <small>Arena control, strategic positioning</small>
+      </div>
+      
+      <div class="input-group">
+        <label>Strategy (0-2 points):</label>
+        <input id="bot1-strategy" type="number" min="0" max="2" step="1" value="0" disabled />
+        <small>Tactical decisions, weapon usage</small>
+      </div>
+      
+      <div style="margin-top: 20px; padding: 15px; background: rgba(50, 130, 184, 0.2); border-radius: 5px;">
+        <h4>Total: <span id="bot1-total">0</span> / 13</h4>
+      </div>
+    </div>
+    
+    <!-- Bot 2 Scoring -->
+    <div style="border: 2px solid; padding: 20px; border-radius: 10px;">
+      <h4 style="text-align: center;">🤖 Bot 2 Scores</h4>
+      
+      <div class="input-group">
+        <label>Damage (0-5 points):</label>
+        <input id="bot2-damage" type="number" min="0" max="5" step="1" value="0" disabled />
+        <small>Impact, destruction caused to opponent</small>
+      </div>
+      
+      <div class="input-group">
+        <label>Aggression (0-3 points):</label>
+        <input id="bot2-aggression" type="number" min="0" max="3" step="1" value="0" disabled />
+        <small>Controlled attacks, forward movement</small>
+      </div>
+      
+      <div class="input-group">
+        <label>Control (0-3 points):</label>
+        <input id="bot2-control" type="number" min="0" max="3" step="1" value="0" disabled />
+        <small>Arena control, strategic positioning</small>
+      </div>
+      
+      <div class="input-group">
+        <label>Strategy (0-2 points):</label>
+        <input id="bot2-strategy" type="number" min="0" max="2" step="1" value="0" disabled />
+        <small>Tactical decisions, weapon usage</small>
+      </div>
+      
+      <div style="margin-top: 20px; padding: 15px; background: rgba(50, 130, 184, 0.2); border-radius: 5px;">
+        <h4>Total: <span id="bot2-total">0</span> / 13</h4>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Judge Notes -->
+  <div style="margin-top: 30px;">
+    <label>Judge Notes:</label>
+    <textarea id="judge-notes" rows="4" style="width: 100%; padding: 10px;" placeholder="Additional observations, highlights, penalties..." disabled></textarea>
+  </div>
+  
+  <!-- Action Buttons -->
+  <div class="button-group" style="justify-content: center; margin-top: 30px;">
+    <button onclick="saveMatchResult()" class="btn-primary" style="font-size: 1.2rem; padding: 15px 40px;">💾 Save Match Result</button>
+    <button onclick="clearMatch()" class="btn-secondary">Clear Match</button>
+  </div>
+</div>
+
+<!-- Match Results -->
+<section id="match-results" class="results-section">
+  <div class="container">
+    <h2>Match Results</h2>
+    <table border="1" cellpadding="10">
+      <thead>
+        <tr>
+          <th>Match #</th>
+          <th>Bot 1</th>
+          <th>Bot 1 Score</th>
+          <th>Bot 2</th>
+          <th>Bot 2 Score</th>
+          <th>Winner</th>
+          <th>Result Type</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Leaderboard -->
+<section class="results-section">
+  <div class="container">
+    <h2>Leaderboard</h2>
+    <table border="1" cellpadding="10">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Bot Name</th>
+          <th>Team</th>
+          <th>Wins</th>
+          <th>Losses</th>
+          <th>Draws</th>
+          <th>Total Points</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboard-body"></tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<script>
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Firestore references
+  const matchTimerDoc = db.collection('battlebot-settings').doc('matchTimer');
+  const currentMatchDoc = db.collection('battlebot-settings').doc('currentMatch');
+  const matchResultsCollection = db.collection('battlebot-results');
+  const battlebotsCollection = db.collection('battlebots');
+
+  // Timer state
+  let matchTimerData = null;
+  let matchTimerInterval = null;
+  let matchDuration = 180; // 3 minutes in seconds
+
+  // Format match time
+  function formatMatchTime(seconds) {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
+
+  // Calculate remaining time
+  function calculateRemainingTime() {
+    if (!matchTimerData || !matchTimerData.startTime || !matchTimerData.running) {
+      return matchDuration;
+    }
+    const elapsed = (Date.now() - matchTimerData.startTime.toMillis()) / 1000;
+    const remaining = Math.max(0, matchDuration - elapsed);
+    return remaining;
+  }
+
+  // Start match timer display
+  function startMatchTimerDisplay() {
+    if (matchTimerInterval) clearInterval(matchTimerInterval);
+    
+    matchTimerInterval = setInterval(() => {
+      if (matchTimerData && matchTimerData.running) {
+        const remaining = calculateRemainingTime();
+        document.getElementById('match-timer').textContent = formatMatchTime(remaining);
+        
+        if (remaining <= 0) {
+          pauseMatchTimer();
+          alert('Match time expired!');
+        }
+      }
+    }, 100);
+  }
+
+  // Listen to match timer
+  function listenMatchTimer() {
+    matchTimerDoc.onSnapshot(doc => {
+      matchTimerData = doc.exists ? doc.data() : null;
+      
+      if (matchTimerData && matchTimerData.running) {
+        startMatchTimerDisplay();
+      } else {
+        if (matchTimerInterval) clearInterval(matchTimerInterval);
+        const remaining = matchTimerData?.remainingTime ?? matchDuration;
+        document.getElementById('match-timer').textContent = formatMatchTime(remaining);
+      }
+    });
+  }
+
+  // Start match timer
+  async function startMatchTimer() {
+    const now = firebase.firestore.Timestamp.now();
+    await matchTimerDoc.set({
+      startTime: now,
+      running: true,
+      remainingTime: matchDuration
+    });
+  }
+
+  // Pause match timer
+  async function pauseMatchTimer() {
+    if (!matchTimerData || !matchTimerData.running) return;
+    
+    const remaining = calculateRemainingTime();
+    await matchTimerDoc.set({
+      startTime: null,
+      running: false,
+      remainingTime: remaining
+    });
+  }
+
+  // Reset match timer
+  async function resetMatchTimer() {
+    if (!confirm('Reset match timer to 3:00?')) return;
+    
+    await matchTimerDoc.set({
+      startTime: null,
+      running: false,
+      remainingTime: matchDuration
+    });
+    
+    document.getElementById('match-timer').textContent = formatMatchTime(matchDuration);
+  }
+
+  // Calculate totals
+  function updateTotals() {
+    const bot1Total = 
+      parseInt(document.getElementById('bot1-damage').value || 0) +
+      parseInt(document.getElementById('bot1-aggression').value || 0) +
+      parseInt(document.getElementById('bot1-control').value || 0) +
+      parseInt(document.getElementById('bot1-strategy').value || 0);
+    
+    const bot2Total = 
+      parseInt(document.getElementById('bot2-damage').value || 0) +
+      parseInt(document.getElementById('bot2-aggression').value || 0) +
+      parseInt(document.getElementById('bot2-control').value || 0) +
+      parseInt(document.getElementById('bot2-strategy').value || 0);
+    
+    document.getElementById('bot1-total').textContent = bot1Total;
+    document.getElementById('bot2-total').textContent = bot2Total;
+  }
+
+  // Add event listeners for score inputs
+  function setupScoreListeners() {
+    ['bot1', 'bot2'].forEach(bot => {
+      ['damage', 'aggression', 'control', 'strategy'].forEach(category => {
+        const input = document.getElementById(`${bot}-${category}`);
+        if (input) {
+          input.addEventListener('input', updateTotals);
+        }
+      });
+    });
+  }
+
+  // Authentication
+  function login() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => alert('Login failed: ' + err.message));
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+
+  // Set current match
+  async function setCurrentMatch() {
+    const bot1Name = document.getElementById('match-bot1-name').value.trim();
+    const bot1Team = document.getElementById('match-bot1-team').value.trim();
+    const bot2Name = document.getElementById('match-bot2-name').value.trim();
+    const bot2Team = document.getElementById('match-bot2-team').value.trim();
+    
+    if (!bot1Name || !bot2Name) {
+      alert('Enter both bot names');
+      return;
+    }
+    
+    await currentMatchDoc.set({
+      bot1: { name: bot1Name, team: bot1Team },
+      bot2: { name: bot2Name, team: bot2Team },
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    // Update live display
+    document.getElementById('bot1-live-name').innerHTML = `<strong>${bot1Name}</strong>`;
+    document.getElementById('bot1-live-team').textContent = bot1Team;
+    document.getElementById('bot2-live-name').innerHTML = `<strong>${bot2Name}</strong>`;
+    document.getElementById('bot2-live-team').textContent = bot2Team;
+    
+    alert('Live match updated!');
+  }
+
+  // Save match result
+  async function saveMatchResult() {
+    const bot1Name = document.getElementById('match-bot1-name').value.trim();
+    const bot1Team = document.getElementById('match-bot1-team').value.trim();
+    const bot2Name = document.getElementById('match-bot2-name').value.trim();
+    const bot2Team = document.getElementById('match-bot2-team').value.trim();
+    const matchResult = document.getElementById('match-result').value;
+    const judgeNotes = document.getElementById('judge-notes').value.trim();
+    
+    if (!bot1Name || !bot2Name) {
+      alert('Enter both bot names');
+      return;
+    }
+    
+    if (!matchResult) {
+      alert('Select match result');
+      return;
+    }
+    
+    const bot1Scores = {
+      damage: parseInt(document.getElementById('bot1-damage').value || 0),
+      aggression: parseInt(document.getElementById('bot1-aggression').value || 0),
+      control: parseInt(document.getElementById('bot1-control').value || 0),
+      strategy: parseInt(document.getElementById('bot1-strategy').value || 0)
+    };
+    
+    const bot2Scores = {
+      damage: parseInt(document.getElementById('bot2-damage').value || 0),
+      aggression: parseInt(document.getElementById('bot2-aggression').value || 0),
+      control: parseInt(document.getElementById('bot2-control').value || 0),
+      strategy: parseInt(document.getElementById('bot2-strategy').value || 0)
+    };
+    
+    bot1Scores.total = bot1Scores.damage + bot1Scores.aggression + bot1Scores.control + bot1Scores.strategy;
+    bot2Scores.total = bot2Scores.damage + bot2Scores.aggression + bot2Scores.control + bot2Scores.strategy;
+    
+    // Determine winner
+    let winner = '';
+    if (matchResult === 'bot1-ko') {
+      winner = bot1Name;
+    } else if (matchResult === 'bot2-ko') {
+      winner = bot2Name;
+    } else if (matchResult === 'judges') {
+      winner = bot1Scores.total > bot2Scores.total ? bot1Name : 
+               bot2Scores.total > bot1Scores.total ? bot2Name : 'Draw';
+    } else if (matchResult === 'draw') {
+      winner = 'Draw';
+    }
+    
+    await matchResultsCollection.add({
+      bot1: { name: bot1Name, team: bot1Team, scores: bot1Scores },
+      bot2: { name: bot2Name, team: bot2Team, scores: bot2Scores },
+      winner: winner,
+      resultType: matchResult,
+      judgeNotes: judgeNotes,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert('Match result saved!');
+  }
+
+  // Clear match
+  async function clearMatch() {
+    if (!confirm('Clear current match?')) return;
+    
+    // Clear inputs
+    document.getElementById('match-bot1-name').value = '';
+    document.getElementById('match-bot1-team').value = '';
+    document.getElementById('match-bot2-name').value = '';
+    document.getElementById('match-bot2-team').value = '';
+    document.getElementById('match-result').value = '';
+    document.getElementById('judge-notes').value = '';
+    
+    ['bot1', 'bot2'].forEach(bot => {
+      document.getElementById(`${bot}-damage`).value = 0;
+      document.getElementById(`${bot}-aggression`).value = 0;
+      document.getElementById(`${bot}-control`).value = 0;
+      document.getElementById(`${bot}-strategy`).value = 0;
+    });
+    
+    updateTotals();
+    
+    await currentMatchDoc.delete();
+  }
+
+  // Listen to current match
+  function listenCurrentMatch() {
+    currentMatchDoc.onSnapshot(doc => {
+      if (doc.exists) {
+        const data = doc.data();
+        document.getElementById('bot1-live-name').innerHTML = `<strong>${data.bot1.name}</strong>`;
+        document.getElementById('bot1-live-team').textContent = data.bot1.team;
+        document.getElementById('bot2-live-name').innerHTML = `<strong>${data.bot2.name}</strong>`;
+        document.getElementById('bot2-live-team').textContent = data.bot2.team;
+      } else {
+        document.getElementById('bot1-live-name').textContent = 'Waiting...';
+        document.getElementById('bot1-live-team').textContent = '';
+        document.getElementById('bot2-live-name').textContent = 'Waiting...';
+        document.getElementById('bot2-live-team').textContent = '';
+      }
+    });
+  }
+
+  // Listen to match results
+  function listenMatchResults() {
+    matchResultsCollection.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+      const tbody = document.getElementById('results-body');
+      tbody.innerHTML = '';
+      
+      let matchNum = snapshot.size;
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        const row = document.createElement('tr');
+        
+        const resultTypeDisplay = {
+          'bot1-ko': 'KO',
+          'bot2-ko': 'KO',
+          'judges': 'Judges Decision',
+          'draw': 'Draw'
+        }[d.resultType] || d.resultType;
+        
+        row.innerHTML = `
+          <td>${matchNum--}</td>
+          <td>${d.bot1.name}<br><small>${d.bot1.team}</small></td>
+          <td>${d.bot1.scores.total}</td>
+          <td>${d.bot2.name}<br><small>${d.bot2.team}</small></td>
+          <td>${d.bot2.scores.total}</td>
+          <td><strong>${d.winner}</strong></td>
+          <td>${resultTypeDisplay}</td>
+          <td>${auth.currentUser ? `<button onclick="removeResult('${doc.id}')">Remove ❌</button>` : '-'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+      
+      updateLeaderboard(snapshot.docs);
+    });
+  }
+
+  // Update leaderboard
+  function updateLeaderboard(matchDocs) {
+    const stats = {};
+    
+    matchDocs.forEach(doc => {
+      const d = doc.data();
+      
+      // Initialize stats
+      [d.bot1, d.bot2].forEach(bot => {
+        if (!stats[bot.name]) {
+          stats[bot.name] = {
+            name: bot.name,
+            team: bot.team,
+            wins: 0,
+            losses: 0,
+            draws: 0,
+            totalPoints: 0
+          };
+        }
+      });
+      
+      // Count wins/losses/draws
+      if (d.winner === d.bot1.name) {
+        stats[d.bot1.name].wins++;
+        stats[d.bot2.name].losses++;
+      } else if (d.winner === d.bot2.name) {
+        stats[d.bot2.name].wins++;
+        stats[d.bot1.name].losses++;
+      } else {
+        stats[d.bot1.name].draws++;
+        stats[d.bot2.name].draws++;
+      }
+      
+      // Add points
+      stats[d.bot1.name].totalPoints += d.bot1.scores.total;
+      stats[d.bot2.name].totalPoints += d.bot2.scores.total;
+    });
+    
+    // Sort by wins, then total points
+    const sorted = Object.values(stats).sort((a, b) => {
+      if (b.wins !== a.wins) return b.wins - a.wins;
+      return b.totalPoints - a.totalPoints;
+    });
+    
+    const tbody = document.getElementById('leaderboard-body');
+    tbody.innerHTML = '';
+    
+    sorted.forEach((bot, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${index + 1}</td>
+        <td>${bot.name}</td>
+        <td>${bot.team}</td>
+        <td>${bot.wins}</td>
+        <td>${bot.losses}</td>
+        <td>${bot.draws}</td>
+        <td>${bot.totalPoints}</td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  // Remove result
+  async function removeResult(id) {
+    if (!confirm('Remove this match result?')) return;
+    await matchResultsCollection.doc(id).delete();
+  }
+
+  // Bot Management
+  async function addBot() {
+    const botName = document.getElementById('new-bot').value.trim();
+    const teamName = document.getElementById('bot-team').value.trim();
+    
+    if (!botName || !teamName) {
+      return alert('Enter both bot name and team name');
+    }
+
+    const snapshot = await battlebotsCollection.where('botName', '==', botName).get();
+    if (!snapshot.empty) {
+      return alert('Bot name already registered');
+    }
+
+    await battlebotsCollection.add({
+      botName,
+      teamName,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    document.getElementById('new-bot').value = '';
+    document.getElementById('bot-team').value = '';
+    loadBots();
+  }
+
+  async function loadBots() {
+    const snapshot = await battlebotsCollection.get();
+    const botsList = document.getElementById('bots-list');
+    botsList.innerHTML = '';
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const li = document.createElement('li');
+      li.textContent = `${data.botName} (${data.teamName})`;
+
+      const loadBtn1 = document.createElement('button');
+      loadBtn1.textContent = 'Load as Bot 1';
+      loadBtn1.onclick = () => loadBotToMatch(data, 1);
+
+      const loadBtn2 = document.createElement('button');
+      loadBtn2.textContent = 'Load as Bot 2';
+      loadBtn2.onclick = () => loadBotToMatch(data, 2);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Remove ❌';
+      removeBtn.onclick = async () => {
+        if (!confirm(`Remove bot "${data.botName}"?`)) return;
+        await battlebotsCollection.doc(doc.id).delete();
+        loadBots();
+      };
+
+      li.appendChild(loadBtn1);
+      li.appendChild(loadBtn2);
+      li.appendChild(removeBtn);
+      botsList.appendChild(li);
+    });
+  }
+
+  function loadBotToMatch(botData, position) {
+    document.getElementById(`match-bot${position}-name`).value = botData.botName;
+    document.getElementById(`match-bot${position}-team`).value = botData.teamName;
+    alert(`${botData.botName} loaded as Bot ${position}!`);
+  }
+
+  // Load current match data
+  async function loadCurrentMatchData() {
+    const doc = await currentMatchDoc.get();
+    if (doc.exists) {
+      const data = doc.data();
+      document.getElementById('match-bot1-name').value = data.bot1.name;
+      document.getElementById('match-bot1-team').value = data.bot1.team;
+      document.getElementById('match-bot2-name').value = data.bot2.name;
+      document.getElementById('match-bot2-team').value = data.bot2.team;
+    }
+  }
+
+  // Auth State UI
+  auth.onAuthStateChanged(user => {
+    const userInfo = document.getElementById('user-info');
+    const loginForm = document.getElementById('login-form');
+    const matchEditor = document.getElementById('match-editor');
+    const botRegistration = document.getElementById('bot-registration');
+    const timerControls = document.getElementById('timer-controls');
+    
+    if (user) {
+      userInfo.innerHTML = `Logged in as: ${user.email} <button onclick="logout()">Logout</button>`;
+      loginForm.style.display = 'none';
+      matchEditor.style.display = 'block';
+      botRegistration.style.display = 'block';
+      timerControls.style.display = 'block';
+
+      // Enable inputs
+      document.getElementById('match-bot1-name').disabled = false;
+      document.getElementById('match-bot1-team').disabled = false;
+      document.getElementById('match-bot2-name').disabled = false;
+      document.getElementById('match-bot2-team').disabled = false;
+      document.getElementById('match-result').disabled = false;
+      document.getElementById('judge-notes').disabled = false;
+      
+      ['bot1', 'bot2'].forEach(bot => {
+        document.getElementById(`${bot}-damage`).disabled = false;
+        document.getElementById(`${bot}-aggression`).disabled = false;
+        document.getElementById(`${bot}-control`).disabled = false;
+        document.getElementById(`${bot}-strategy`).disabled = false;
+      });
+
+      loadCurrentMatchData();
+      loadBots();
+    } else {
+      userInfo.textContent = '';
+      loginForm.style.display = 'block';
+      matchEditor.style.display = 'none';
+      botRegistration.style.display = 'none';
+      timerControls.style.display = 'none';
+
+      // Disable inputs
+      document.getElementById('match-bot1-name').disabled = true;
+      document.getElementById('match-bot1-team').disabled = true;
+      document.getElementById('match-bot2-name').disabled = true;
+      document.getElementById('match-bot2-team').disabled = true;
+      document.getElementById('match-result').disabled = true;
+      document.getElementById('judge-notes').disabled = true;
+      
+      ['bot1', 'bot2'].forEach(bot => {
+        document.getElementById(`${bot}-damage`).disabled = true;
+        document.getElementById(`${bot}-aggression`).disabled = true;
+        document.getElementById(`${bot}-control`).disabled = true;
+        document.getElementById(`${bot}-strategy`).disabled = true;
+      });
+    }
+  });
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    listenCurrentMatch();
+    listenMatchTimer();
+    listenMatchResults();
+    setupScoreListeners();
+    
+    // Initialize matrix background
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const letters = '01010101EXTRA1010101BOTICS101010100101';
+    const fontSize = 12;
+    const columns = canvas.width / fontSize;
+    
+    const drops = [];
+    for(let i = 0; i < columns; i++) {
+      drops[i] = 1;
+    }
+    
+    function drawMatrix() {
+      ctx.fillStyle = 'rgba(27, 38, 44, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#0f4c75';
+      ctx.font = `${fontSize}px monospace`;
+      
+      for(let i = 0; i < drops.length; i++) {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        
+        if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        
+        drops[i]++;
+      }
+    }
+    
+    setInterval(drawMatrix, 33);
+  });
+
+  // Handle window resize
+  window.addEventListener('resize', function() {
+    const canvas = document.getElementById('matrix-canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+</script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Extrabotics</h3>
+        <p>Pushing the boundaries of robotics innovation through cutting-edge technology and education.</p>
+        <div class="social-links">
+          <a href="contact" class="social-link">📧</a>
+          <a href="contact" class="social-link">📱</a>
+          <a href="contact" class="social-link">🔗</a>
+        </div>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="index">Home</a></li>
+          <li><a href="about">About</a></li>
+          <li><a href="events">Events</a></li>
+          <li><a href="gallery">Gallery</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="events">Robotics Competitions</a></li>
+          <li><a href="events">Educational Workshops</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Contact</h4>
+        <div class="contact-info">
+          <p>Ruaraka, Outering Road</p>
+          <p>+254 706 781 886</p>
+          <p>info@extrabotics.com</p>
+          <p>competitions@extrabotics.com</p>
+          <p>proposals@extrabotics.com</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2025 Extrabotics. All rights reserved. | Designed for innovation and excellence.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

@@ -1,0 +1,3991 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<link rel="icon" type="image/png" href="/logo.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Extrabotics | Events Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore-compat.js"></script>
+
+<style>
+/* ── SITE THEME TOKENS ── */
+:root {
+  --bg:       #f4f6f9;
+  --bg2:      #ffffff;
+  --panel:    #ffffff;
+  --border:   #e2e8f0;
+  --border2:  #cbd5e1;
+  --navy:     #1a1a2e;
+  --purple:   #667eea;
+  --purple2:  #764ba2;
+  --accent:   #00f0ff;
+  --pink:     #ff2d75;
+  --text:     #2d3748;
+  --muted:    #718096;
+  --light:    #f7fafc;
+  --success:  #38a169;
+  --warn:     #d69e2e;
+  --danger:   #e53e3e;
+  --shadow-sm: 0 1px 4px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.04);
+  --shadow:    0 4px 16px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 36px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06);
+  --radius:    14px;
+  --radius-sm: 9px;
+}
+
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  line-height: 1.6;
+  font-size: 15px;
+}
+
+/* ── MATRIX BG ── */
+.matrix-bg { position:fixed; top:0; left:0; width:100%; height:100%; z-index:0; opacity:0.025; pointer-events:none; }
+#matrix-canvas { width:100%; height:100%; }
+
+/* ── FLOATING PARTICLES ── */
+.floating-elements { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:1; }
+.tech-particle { position:absolute; font-size:1.5rem; opacity:0.06; animation:techFloat 8s ease-in-out infinite; }
+@keyframes techFloat {
+  0%,100% { transform:translateY(0) rotate(0deg); opacity:0.06; }
+  33%     { transform:translateY(-20px) rotate(120deg); opacity:0.1; }
+  66%     { transform:translateY(10px) rotate(240deg); opacity:0.07; }
+}
+
+/* ── NAVBAR ── */
+.navbar {
+  background: var(--navy);
+  padding: 0.85rem 0;
+  position: fixed;
+  width: 100%;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.2);
+}
+.nav-container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.logo {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: white;
+  text-decoration: none;
+  letter-spacing: 1.5px;
+  position: relative;
+  animation: glitch 4s ease-in-out infinite;
+}
+.logo::before, .logo::after { content:attr(data-text); position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; }
+.logo::before { color:#ff0040; animation:glitchTop 4s ease-in-out infinite; }
+.logo::after  { color:#00ffff; animation:glitchBottom 4s ease-in-out infinite; }
+@keyframes glitch      { 0%,100%{transform:translate(0)} 20%{transform:translate(-2px,2px)} 40%{transform:translate(-2px,-2px)} 60%{transform:translate(2px,2px)} 80%{transform:translate(2px,-2px)} }
+@keyframes glitchTop   { 0%,100%{opacity:0} 10%,16%{opacity:0.4;transform:translateX(-2px)} }
+@keyframes glitchBottom{ 0%,100%{opacity:0} 10%,16%{opacity:0.4;transform:translateX(2px)} }
+
+.nav-menu { display:flex; list-style:none; gap:0.3rem; align-items:center; flex-wrap:wrap; }
+.nav-link {
+  color: #94a3b8;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.875rem;
+  padding: 0.45rem 1rem;
+  border-radius: 7px;
+  transition: all 0.2s;
+  letter-spacing: 0.01em;
+}
+.nav-link:hover { color:white; background:rgba(255,255,255,0.1); }
+.nav-link.active { background:white; color:var(--navy); font-weight:600; }
+.nav-link.nav-link-admin {
+  background: linear-gradient(135deg, var(--purple), var(--purple2));
+  color: white;
+  font-weight: 600;
+}
+.nav-link.nav-link-admin:hover { opacity: 0.9; transform: translateY(-1px); }
+
+#nav-user-status {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.8rem;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+/* ── PAGE WRAPPER ── */
+.page-wrapper {
+  margin-top: 68px;
+  position: relative;
+  z-index: 10;
+  min-height: calc(100vh - 68px);
+}
+
+/* ── HERO BANNER ── */
+.admin-hero {
+  background:
+    radial-gradient(circle at 20% 80%, rgba(102,126,234,0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(118,75,162,0.1) 0%, transparent 50%),
+    linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  padding: 44px 2rem 36px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid var(--border);
+}
+.admin-hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(circle at 25% 25%, #ebf4ff 1px, transparent 1px),
+    radial-gradient(circle at 75% 75%, #f5f3ff 1px, transparent 1px);
+  background-size: 50px 50px, 80px 80px;
+  opacity: 0.5;
+  animation: bgFloat 20s ease-in-out infinite;
+}
+@keyframes bgFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+.admin-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(102,126,234,0.08);
+  border: 1px solid rgba(102,126,234,0.25);
+  padding: 5px 16px;
+  border-radius: 40px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 14px;
+  position: relative; z-index: 2;
+}
+.badge-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--purple);
+  box-shadow: 0 0 6px var(--purple);
+  animation: blinkDot 1.5s ease-in-out infinite;
+}
+@keyframes blinkDot { 0%,100%{opacity:1} 50%{opacity:0.2} }
+.admin-hero h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: clamp(1.5rem, 2.8vw, 2.2rem);
+  font-weight: 900;
+  color: var(--navy);
+  position: relative; z-index: 2;
+  margin-bottom: 0.5rem;
+  letter-spacing: 0.5px;
+}
+.admin-hero p {
+  font-size: 0.95rem;
+  color: var(--muted);
+  position: relative; z-index: 2;
+  max-width: 580px;
+  margin: 0 auto;
+}
+
+/* ── PAGE TABS ── */
+.page-tabs {
+  background: var(--navy);
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  padding: 0 2rem;
+  position: sticky;
+  top: 68px;
+  z-index: 500;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.18);
+}
+.page-tab {
+  padding: 14px 28px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  color: #64748b;
+  cursor: pointer;
+  border: none;
+  background: none;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  text-transform: uppercase;
+  font-family: inherit;
+}
+.page-tab:hover { color: #cbd5e1; }
+.page-tab.active {
+  color: white;
+  border-bottom-color: var(--purple);
+  background: rgba(255,255,255,0.04);
+}
+
+/* ── PAGE SECTIONS ── */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* ── LOGIN OVERLAY ── */
+#login-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: calc(100vh - 200px);
+  padding: 2rem;
+}
+.login-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 48px 40px;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: var(--shadow-lg);
+  position: relative;
+  overflow: hidden;
+}
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--purple), var(--purple2));
+}
+.login-card .lock-icon {
+  width: 60px; height: 60px;
+  background: linear-gradient(135deg, var(--purple), var(--purple2));
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.6rem;
+  margin: 0 auto 20px;
+  box-shadow: 0 8px 24px rgba(102,126,234,0.35);
+}
+.login-card h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.05rem;
+  color: var(--navy);
+  text-align: center;
+  margin-bottom: 6px;
+  letter-spacing: 1px;
+}
+.login-card p { font-size: 0.85rem; color: var(--muted); text-align: center; margin-bottom: 28px; }
+
+/* ── EVENT TABS ── */
+.event-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 24px;
+  border-bottom: 2px solid var(--border);
+  padding-bottom: 14px;
+}
+.event-tab {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--muted);
+  padding: 8px 18px;
+  border-radius: 8px 8px 0 0;
+  cursor: pointer;
+  font-size: 0.77rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  font-family: inherit;
+}
+.event-tab:hover { border-color: var(--purple); color: var(--purple); background: rgba(102,126,234,0.05); }
+.event-tab.active {
+  background: rgba(102,126,234,0.07);
+  border-color: var(--purple);
+  border-bottom-color: var(--bg);
+  color: var(--purple);
+}
+.event-panel { display: none; animation: fadeIn 0.25s ease; }
+.event-panel.active { display: block; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+/* ── PANEL TITLE ── */
+.panel-title {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.panel-title h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.05rem;
+  color: var(--navy);
+  letter-spacing: 1.5px;
+}
+.panel-badge {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: linear-gradient(135deg, var(--purple), var(--purple2));
+  color: white;
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+
+/* ── GRID LAYOUTS ── */
+.two-col   { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+.three-col { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; }
+@media(max-width:1100px){ .three-col{grid-template-columns:1fr 1fr;} }
+@media(max-width:760px) { .two-col,.three-col{grid-template-columns:1fr;} }
+.gap-top { margin-top: 20px; }
+
+/* ── CARDS ── */
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px 24px;
+  box-shadow: var(--shadow-sm);
+}
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+.card-header-icon {
+  width: 26px; height: 26px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, var(--purple), var(--purple2));
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* ── ARENA / MATCH PANELS ── */
+.dual-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; }
+@media(max-width:900px){ .dual-grid{grid-template-columns:1fr;} }
+
+.arena-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.arena-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.arena-card.arena-a::before { background:linear-gradient(90deg, var(--purple), var(--purple2)); }
+.arena-card.arena-b::before { background:linear-gradient(90deg, #f093fb, var(--pink)); }
+.arena-card.ring-1::before  { background:linear-gradient(90deg, var(--purple), var(--purple2)); }
+.arena-card.ring-2::before  { background:linear-gradient(90deg, #f093fb, var(--pink)); }
+
+.arena-label {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.arena-label .dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  animation: blinkDot 1.5s ease-in-out infinite;
+}
+.arena-a .dot, .ring-1 .dot { background: var(--purple); box-shadow:0 0 6px var(--purple); }
+.arena-b .dot, .ring-2 .dot { background: var(--pink);   box-shadow:0 0 6px var(--pink); }
+
+/* ── LIVE BOX ── */
+.live-box {
+  background: linear-gradient(135deg, rgba(102,126,234,0.05), rgba(118,75,162,0.03));
+  border: 1px solid rgba(102,126,234,0.18);
+  border-radius: var(--radius-sm);
+  padding: 18px;
+  text-align: center;
+  margin-bottom: 18px;
+}
+.live-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--danger);
+  margin-bottom: 10px;
+  background: rgba(229,62,62,0.08);
+  border: 1px solid rgba(229,62,62,0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+.live-label .dot-blink { animation:blinkDot 1s infinite; width:6px; height:6px; border-radius:50%; background:var(--danger); }
+.vs-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  font-size: 1rem;
+  margin: 8px 0;
+}
+.vs-row .team { font-weight: 700; color: var(--navy); font-size: 1rem; }
+.vs-row .vs-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: white;
+  background: linear-gradient(135deg, var(--purple), var(--purple2));
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+.score-display {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--navy);
+  margin-top: 8px;
+}
+
+/* ── TIMER ── */
+.timer-wrap { text-align:center; margin-bottom:16px; }
+.timer-display {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: var(--navy);
+  letter-spacing: 3px;
+  background: var(--light);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 24px;
+  display: inline-block;
+  min-width: 180px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.3s;
+}
+.timer-display.running {
+  color: var(--success);
+  border-color: var(--success);
+  background: rgba(56,161,105,0.04);
+  box-shadow: 0 0 18px rgba(56,161,105,0.18);
+  animation: timerPulse 1s ease-in-out infinite;
+}
+.timer-display.urgent {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgba(229,62,62,0.04);
+  box-shadow: 0 0 18px rgba(229,62,62,0.18);
+}
+@keyframes timerPulse { 0%,100%{opacity:1} 50%{opacity:0.88} }
+
+.lane-timer {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 900;
+  text-align: center;
+  padding: 12px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  margin-bottom: 14px;
+  color: var(--navy);
+  background: var(--light);
+  transition: all 0.3s;
+}
+.lane-timer.running { color:var(--success); border-color:var(--success); background:rgba(56,161,105,0.04); }
+
+/* ── FORM CONTROLS ── */
+.form-group { margin-bottom: 14px; }
+.form-group label {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 5px;
+}
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 9px 13px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--text);
+  background: var(--bg2);
+  transition: all 0.2s;
+  outline: none;
+  font-family: inherit;
+}
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.12);
+}
+.form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+.form-row-3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; }
+@media(max-width:600px){ .form-row,.form-row-3{grid-template-columns:1fr;} }
+
+/* ── BUTTONS ── */
+.btn {
+  font-family: 'Inter', inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 9px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-decoration: none;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
+.btn:active { transform: translateY(0); }
+
+.btn-primary { background:linear-gradient(135deg, var(--purple), var(--purple2)); color:white; }
+.btn-primary:hover { box-shadow:0 6px 18px rgba(102,126,234,0.4); }
+.btn-success { background:var(--success); color:white; }
+.btn-success:hover { background:#2f855a; box-shadow:0 6px 18px rgba(56,161,105,0.35); }
+.btn-warn { background:var(--warn); color:white; }
+.btn-warn:hover { background:#b7791f; }
+.btn-danger { background:var(--danger); color:white; }
+.btn-danger:hover { background:#c53030; box-shadow:0 6px 18px rgba(229,62,62,0.35); }
+.btn-outline { background:transparent; color:var(--text); border-color:var(--border2); }
+.btn-outline:hover { background:var(--light); border-color:var(--muted); }
+.btn-navy { background:var(--navy); color:white; }
+.btn-navy:hover { background:#2d3748; }
+.btn-teal { background:linear-gradient(135deg,#11998e,#38ef7d); color:white; }
+.btn-teal:hover { box-shadow:0 6px 18px rgba(17,153,142,0.35); }
+
+.btn-sm { padding:6px 12px; font-size:0.73rem; }
+.btn-xs { padding:3px 8px; font-size:0.67rem; }
+.btn-full { width:100%; justify-content:center; margin-top:8px; }
+.btn-group { display:flex; gap:8px; flex-wrap:wrap; margin-top:12px; }
+.btn-group-center { justify-content:center; }
+
+/* ── TABLES ── */
+.table-wrap { overflow-x:auto; margin-top:10px; }
+table { width:100%; border-collapse:collapse; font-size:0.85rem; }
+thead tr { background:var(--light); }
+th {
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+  color: var(--text);
+}
+tbody tr:last-child td { border-bottom:none; }
+tbody tr:hover td { background:rgba(102,126,234,0.03); }
+tr.position-1 td:first-child { color:#d69e2e; font-weight:700; }
+tr.position-2 td:first-child { color:#718096; font-weight:700; }
+tr.position-3 td:first-child { color:#c05621; font-weight:700; }
+
+/* ── BOT / TEAM LIST ── */
+.item-list { list-style:none; max-height:280px; overflow-y:auto; }
+.item-list li {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 9px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+  gap: 8px;
+  transition: background 0.15s;
+}
+.item-list li:hover { background:var(--light); }
+.item-list li:last-child { border-bottom:none; }
+.item-list .item-text { flex:1; min-width:0; color:var(--text); font-weight:500; }
+.bot-info-text { flex:1; min-width:0; color:var(--text); font-weight:500; }
+.item-list .btn-actions { display:flex; gap:4px; flex-shrink:0; }
+
+/* ── FIXTURES LIST ── */
+.fixtures-list { list-style:none; max-height:200px; overflow-y:auto; }
+.fixtures-list li {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border);
+  font-size:0.83rem;
+  gap:8px;
+}
+
+/* ── LANE CARDS (Racing) ── */
+.lane-cards { display:grid; grid-template-columns:1fr 1fr 1fr; gap:18px; margin-bottom:20px; }
+@media(max-width:900px){ .lane-cards{grid-template-columns:1fr;} }
+.lane-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+  position: relative;
+  overflow: hidden;
+}
+.lane-card::before { content:''; position:absolute; top:0; left:0; right:0; height:3px; }
+.lane-card.lane-1::before { background:linear-gradient(90deg, var(--purple), var(--purple2)); }
+.lane-card.lane-2::before { background:linear-gradient(90deg, #11998e, #38ef7d); }
+.lane-card.lane-3::before { background:linear-gradient(90deg, #f093fb, var(--pink)); }
+.lane-label { font-size:0.67rem; font-weight:700; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+
+/* ── SCORE INPUTS ── */
+.score-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.score-box {
+  background: var(--light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px;
+}
+.score-box-title { font-size:0.7rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; margin-bottom:12px; }
+.score-total {
+  text-align:center;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius:6px;
+  margin-top:10px;
+  font-weight:700;
+  font-size:0.9rem;
+  color: var(--purple);
+}
+
+/* ── FIRE STATUS ── */
+.fire-pct-bar {
+  background: var(--light);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 12px;
+}
+.fire-pct-num {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: var(--navy);
+}
+.fire-pct-bar.on-fire .fire-pct-num { color: #c05621; }
+.fire-pct-bar.extinguished .fire-pct-num { color: var(--success); }
+
+/* ── DIVIDER ── */
+hr.divider { border:none; border-top:1px solid var(--border); margin:16px 0; }
+
+/* ── STAT CHIPS ── */
+.stat-chip {
+  display:inline-flex;
+  align-items:center;
+  gap:5px;
+  background: rgba(102,126,234,0.08);
+  border: 1px solid rgba(102,126,234,0.2);
+  color: var(--purple);
+  font-size:0.7rem;
+  font-weight:700;
+  padding: 3px 10px;
+  border-radius:20px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+}
+
+/* ── SECTION SEPARATORS ── */
+.section-label {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+/* ── REGISTERED TEAMS PANEL (per event) ── */
+.reg-teams-panel {
+  background: linear-gradient(135deg, rgba(102,126,234,0.04), rgba(118,75,162,0.02));
+  border: 1px solid rgba(102,126,234,0.15);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  margin-top: 14px;
+}
+.reg-teams-panel .rtp-header {
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--purple);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.reg-teams-panel .rtp-list { list-style: none; }
+.reg-teams-panel .rtp-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 8px;
+  border-bottom: 1px solid rgba(102,126,234,0.1);
+  font-size: 0.84rem;
+  gap: 8px;
+}
+.reg-teams-panel .rtp-list li:last-child { border-bottom: none; }
+.reg-teams-panel .rtp-list .rtp-name { flex:1; font-weight:600; color:var(--navy); }
+.reg-teams-panel .rtp-list .rtp-actions { display:flex; gap:4px; }
+.rtp-empty { text-align:center; padding:14px; color:var(--muted); font-size:0.82rem; }
+
+/* ── REGISTRATION PAGE ── */
+#registration-section {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+}
+.reg-hero {
+  text-align: center;
+  margin-bottom: 36px;
+}
+.reg-hero h2 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.4rem;
+  color: var(--navy);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+}
+.reg-hero p { color: var(--muted); font-size: 0.95rem; }
+.reg-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 34px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 30px;
+}
+.reg-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--purple), var(--purple2), #f093fb);
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+  margin-top: 8px;
+}
+.category-chip {
+  border: 2px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 14px 12px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.2s;
+  background: var(--bg);
+  user-select: none;
+}
+.category-chip:hover {
+  border-color: var(--purple);
+  background: rgba(102,126,234,0.05);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+.category-chip.selected {
+  border-color: var(--purple);
+  background: linear-gradient(135deg, rgba(102,126,234,0.09), rgba(118,75,162,0.05));
+  box-shadow: 0 0 0 3px rgba(102,126,234,0.14);
+}
+.category-chip .chip-icon { font-size: 1.6rem; margin-bottom: 6px; display: block; }
+.category-chip .chip-name { font-size: 0.77rem; font-weight: 700; color: var(--navy); letter-spacing: 0.04em; }
+.category-chip.selected .chip-name { color: var(--purple); }
+
+.reg-success {
+  display: none;
+  text-align: center;
+  padding: 30px;
+  background: rgba(56,161,105,0.05);
+  border: 1px solid rgba(56,161,105,0.2);
+  border-radius: var(--radius);
+  margin-top: 20px;
+}
+.reg-success .success-icon { font-size: 3rem; margin-bottom: 12px; }
+.reg-success h3 { font-size: 1.15rem; color: var(--navy); margin-bottom: 6px; }
+.reg-success p  { color: var(--muted); font-size: 0.9rem; }
+.reg-success.show { display: block; animation: fadeIn 0.4s ease; }
+
+/* ── REMOVE TEAMS SECTION ── */
+.remove-section {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow-sm);
+}
+.remove-section::before {
+  content: '';
+  display: block;
+  height: 4px;
+  background: linear-gradient(90deg, var(--danger), #fc8181);
+  border-radius: 4px 4px 0 0;
+  margin: -28px -28px 24px;
+}
+
+/* ── REGISTERED TABLE ── */
+.registered-table-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar { width:5px; height:5px; }
+::-webkit-scrollbar-track { background:var(--bg); }
+::-webkit-scrollbar-thumb { background:var(--border2); border-radius:3px; }
+::-webkit-scrollbar-thumb:hover { background:var(--muted); }
+
+/* ── RESPONSIVE ── */
+@media(max-width:768px){
+  .page-tabs { overflow-x:auto; justify-content:flex-start; gap:0; }
+  .admin-hero h1 { font-size:1.4rem; }
+  .timer-display { font-size:1.8rem; }
+  .score-grid { grid-template-columns:1fr; }
+}
+@media(max-width:480px){
+  .event-tabs { gap:4px; }
+  .event-tab { padding:6px 10px; font-size:0.7rem; }
+  .dual-grid { grid-template-columns:1fr; }
+  .lane-cards { grid-template-columns:1fr; }
+  .reg-card { padding:20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- Floating Tech Elements -->
+<div class="floating-elements">
+  <div class="tech-particle" style="top:20%;left:10%;animation-delay:0s;">⚙️</div>
+  <div class="tech-particle" style="top:60%;right:15%;animation-delay:2s;">🔧</div>
+  <div class="tech-particle" style="top:40%;left:80%;animation-delay:4s;">💾</div>
+  <div class="tech-particle" style="top:80%;left:20%;animation-delay:1s;">🖥️</div>
+  <div class="tech-particle" style="top:30%;right:5%;animation-delay:3s;">🤖</div>
+  <div class="tech-particle" style="top:70%;right:25%;animation-delay:5s;">⚡</div>
+</div>
+
+<!-- Matrix Background -->
+<div class="matrix-bg"><canvas id="matrix-canvas"></canvas></div>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="index" class="logo glitch-effect" data-text="Extrabotics">Extrabotics</a>
+    <ul class="nav-menu">
+      <li><a href="index"   class="nav-link">Home</a></li>
+      <li><a href="about"   class="nav-link">About</a></li>
+      <li><a href="events"  class="nav-link">Events</a></li>
+      <li><a href="contact" class="nav-link">Contact</a></li>
+      <li><a href="login"   class="nav-link">Academy</a></li>
+      <li><a href="#"       class="nav-link nav-link-admin active">Admin</a></li>
+    </ul>
+    <div id="nav-user-status">
+      <span id="nav-user-text">Not logged in</span>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Wrapper -->
+<div class="page-wrapper">
+
+  <!-- Hero Banner -->
+  <div class="admin-hero">
+    <div class="admin-hero-badge">
+      <span class="badge-dot"></span>
+      Extrabotics Olympiad
+    </div>
+    <h1>Events Admin Dashboard</h1>
+    <p>Manage all 7 competition categories — matches, results, timers &amp; participant registrations in one place.</p>
+  </div>
+
+  <!-- Page-level Tab Bar -->
+  <div class="page-tabs">
+    <button class="page-tab active" onclick="switchPageTab('dashboard')" id="ptab-dashboard">
+      🎮 Match Control
+    </button>
+    <button class="page-tab" onclick="switchPageTab('registration')" id="ptab-registration">
+      📋 Registration
+    </button>
+  </div>
+
+  <!-- ======== DASHBOARD SECTION ======== -->
+  <div id="dashboard-section" class="page-section active">
+
+    <!-- Login Overlay -->
+    <div id="login-overlay">
+      <div class="login-card">
+        <div class="lock-icon">🔐</div>
+        <h2>Admin Login</h2>
+        <p>Sign in to access match controls, timers and result management for all events.</p>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input id="admin-email" type="email" placeholder="admin@extrabotics.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input id="admin-password" type="password" placeholder="••••••••"
+                 onkeydown="if(event.key==='Enter')globalLogin()" />
+        </div>
+        <div class="btn-group" style="margin-top:6px">
+          <button id="login-btn" class="btn btn-primary btn-full" onclick="globalLogin()">🔐 Sign In →</button>
+        </div>
+        <div id="login-error" style="display:none;margin-top:14px;padding:10px 14px;background:rgba(229,62,62,0.08);border:1px solid rgba(229,62,62,0.2);border-radius:8px;font-size:0.83rem;color:var(--danger);text-align:center"></div>
+      </div>
+    </div>
+
+    <!-- Admin Main (hidden until login) -->
+    <div id="admin-main" style="display:none; padding:28px 24px; max-width:1700px; margin:0 auto;">
+
+      <!-- Logged-in bar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;padding:12px 18px;background:white;border:1px solid var(--border);border-radius:var(--radius-sm);box-shadow:var(--shadow-sm)">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="width:8px;height:8px;border-radius:50%;background:var(--success);box-shadow:0 0 6px var(--success);display:inline-block"></span>
+          <span style="font-size:0.82rem;color:var(--muted)">Signed in as</span>
+          <strong id="admin-user-email" style="font-size:0.88rem;color:var(--navy)">—</strong>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="globalLogout()">Logout</button>
+      </div>
+
+      <!-- Event Tabs -->
+      <div class="event-tabs">
+        <div class="event-tab active" onclick="switchTab('soccer')"  id="tab-soccer"><span>⚽</span> Soccerbots</div>
+        <div class="event-tab" onclick="switchTab('sumo')"    id="tab-sumo"><span>🤼</span> Sumo Bots</div>
+        <div class="event-tab" onclick="switchTab('racing')"  id="tab-racing"><span>🏎️</span> Racing Bots</div>
+        <div class="event-tab" onclick="switchTab('battle')"  id="tab-battle"><span>⚔️</span> BattleBots</div>
+        <div class="event-tab" onclick="switchTab('maze')"    id="tab-maze"><span>🧩</span> Maze Bots</div>
+        <div class="event-tab" onclick="switchTab('balloon')" id="tab-balloon"><span>🎈</span> Balloon Combat</div>
+        <div class="event-tab" onclick="switchTab('fire')"    id="tab-fire"><span>🔥</span> Fire Rescue</div>
+      </div>
+
+      <!-- ===== SOCCER ===== -->
+      <div id="panel-soccer" class="event-panel active">
+        <div class="panel-title">
+          <span style="font-size:2rem">⚽</span>
+          <h2>SOCCERBOTS</h2>
+          <span class="panel-badge">Single Arena Mode</span>
+        </div>
+
+        <!-- Single Arena -->
+        <div class="arena-card arena-a">
+          <div class="arena-label"><span class="dot"></span> Arena — Current Match</div>
+          <div class="live-box">
+            <div class="live-label"><span class="dot-blink"></span> Live</div>
+            <div class="vs-row">
+              <span class="team" id="soccer-a-team-a-live">—</span>
+              <span class="vs-badge">VS</span>
+              <span class="team" id="soccer-a-team-b-live">—</span>
+            </div>
+            <div class="score-display" id="soccer-a-score-live">— : —</div>
+          </div>
+          <div class="timer-wrap">
+            <div class="timer-display" id="soccer-timer-a">05:00</div>
+          </div>
+          <div class="btn-group btn-group-center">
+            <button class="btn btn-success btn-sm" onclick="soccerStartTimer('a')">▶ Start</button>
+            <button class="btn btn-warn btn-sm"    onclick="soccerPauseTimer('a')">⏸ Pause</button>
+            <button class="btn btn-outline btn-sm" onclick="soccerResetTimer('a')">↺ Reset</button>
+          </div>
+          <hr class="divider">
+          <div class="form-row">
+            <div class="form-group"><label>Team A</label><input id="soccer-a-teamA" type="text" placeholder="Team A name" /></div>
+            <div class="form-group"><label>Score A</label><input id="soccer-a-scoreA" type="number" min="0" value="0" /></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Team B</label><input id="soccer-a-teamB" type="text" placeholder="Team B name" /></div>
+            <div class="form-group"><label>Score B</label><input id="soccer-a-scoreB" type="number" min="0" value="0" /></div>
+          </div>
+          <div class="btn-group">
+            <button class="btn btn-primary btn-sm" onclick="soccerSaveLive('a')">💾 Save Live</button>
+            <button class="btn btn-success btn-sm" onclick="soccerEndGame('a')">✅ End Game</button>
+            <button class="btn btn-danger  btn-sm" onclick="soccerClearMatch('a')">Clear</button>
+          </div>
+        </div>
+
+        <!-- Teams + Fixtures -->
+        <div class="two-col gap-top">
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">👥</div> Team Registration</div>
+            <div class="form-row">
+              <div class="form-group"><label>Team Name</label><input id="soccer-new-team" type="text" placeholder="Enter team name" /></div>
+              <div style="display:flex;align-items:flex-end;padding-bottom:1px">
+                <button class="btn btn-success" onclick="soccerAddTeam()">+ Add Team</button>
+              </div>
+            </div>
+            <div class="reg-teams-panel">
+              <div class="rtp-header">📋 Registered Teams</div>
+              <ul class="item-list rtp-list" id="soccer-teams-list"></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">📋</div> Fixture Generator</div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Match Type</label>
+                <select id="soccer-match-type">
+                  <option value="1v1">1v1</option>
+                  <option value="2v2">2v2</option>
+                  <option value="3v3">3v3</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:flex-end;gap:8px;padding-bottom:1px">
+                <button class="btn btn-primary btn-sm" onclick="soccerGenerateFixtures()">Generate</button>
+                <button class="btn btn-danger  btn-sm" onclick="soccerClearFixtures()">Clear All</button>
+              </div>
+            </div>
+            <ul class="fixtures-list" id="soccer-fixtures-list"></ul>
+          </div>
+        </div>
+
+        <!-- Final Results -->
+        <div class="card gap-top">
+          <div class="card-header"><div class="card-header-icon">🏆</div> Final Results</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Team A</th><th>Score</th><th>Team B</th><th>Score</th><th>Arena</th><th>Action</th></tr></thead>
+              <tbody id="soccer-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== SUMO ===== -->
+      <div id="panel-sumo" class="event-panel">
+        <div class="panel-title">
+          <span style="font-size:2rem">🤼</span>
+          <h2>SUMO BOTS</h2>
+          <span class="panel-badge">Group Stage → Grand Final</span>
+        </div>
+
+        <!-- ── STEP 1: BOT REGISTRATION ── -->
+        <div class="section-label">Step 1 — Bot Registration</div>
+        <div class="card" style="margin-bottom:20px">
+          <div class="card-header"><div class="card-header-icon">🤖</div> Register a Bot</div>
+          <div class="form-row-3">
+            <div class="form-group"><label>Bot Name</label><input id="sumo-new-bot" type="text" placeholder="Bot name" /></div>
+            <div class="form-group"><label>Team</label><input id="sumo-bot-team" type="text" placeholder="Team name" /></div>
+            <div class="form-group"><label>Weight (kg)</label><input id="sumo-bot-weight" type="number" step="0.1" placeholder="0.0" /></div>
+          </div>
+          <button class="btn btn-success btn-sm" onclick="sumoAddBot()">+ Add Bot</button>
+          <div class="reg-teams-panel" style="margin-top:14px">
+            <div class="rtp-header">📋 All Registered Bots <span id="sumo-bot-count" style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.78rem;color:var(--muted)"></span></div>
+            <ul class="item-list" id="sumo-bots-list"></ul>
+          </div>
+        </div>
+
+        <!-- ── STEP 2: GROUP ASSIGNMENT ── -->
+        <div class="section-label">Step 2 — Assign Bots to Groups</div>
+        <div style="background:rgba(102,126,234,0.04);border:1px solid rgba(102,126,234,0.15);border-radius:var(--radius-sm);padding:12px 16px;margin-bottom:16px;font-size:0.83rem;color:var(--muted)">
+          Drag bots from the pool into <strong style="color:var(--purple)">Group A (Ring 1)</strong> or <strong style="color:var(--pink)">Group B (Ring 2)</strong>. Each group's winner advances to the Grand Final.
+        </div>
+        <div class="three-col" style="margin-bottom:20px">
+
+          <!-- Unassigned Pool -->
+          <div class="card" style="border:2px dashed var(--border2)">
+            <div class="card-header" style="color:var(--muted)"><div class="card-header-icon" style="background:#718096">📋</div> Unassigned Pool</div>
+            <ul class="item-list" id="sumo-pool-list" style="min-height:80px"></ul>
+          </div>
+
+          <!-- Group A -->
+          <div class="card" style="border:2px solid rgba(102,126,234,0.35)">
+            <div class="card-header" style="color:var(--purple)"><div class="card-header-icon">🔵</div> Group A — Ring 1</div>
+            <ul class="item-list" id="sumo-groupA-list" style="min-height:80px"></ul>
+            <div style="margin-top:10px;font-size:0.75rem;color:var(--muted);font-weight:600">Winner advances to Grand Final</div>
+          </div>
+
+          <!-- Group B -->
+          <div class="card" style="border:2px solid rgba(255,45,117,0.35)">
+            <div class="card-header" style="color:var(--pink)"><div class="card-header-icon" style="background:linear-gradient(135deg,#f093fb,var(--pink))">🔴</div> Group B — Ring 2</div>
+            <ul class="item-list" id="sumo-groupB-list" style="min-height:80px"></ul>
+            <div style="margin-top:10px;font-size:0.75rem;color:var(--muted);font-weight:600">Winner advances to Grand Final</div>
+          </div>
+
+        </div>
+
+        <!-- ── STEP 3: LIVE MATCHES (Two Independent Rings) ── -->
+        <div class="section-label">Step 3 — Run Matches (Admin 1 uses Ring 1 · Admin 2 uses Ring 2)</div>
+        <div class="dual-grid" style="margin-bottom:20px">
+
+          <!-- Ring 1 — Group A -->
+          <div class="arena-card ring-1">
+            <div class="arena-label"><span class="dot"></span> Ring 1 — Group A Matches</div>
+            <div class="live-box">
+              <div class="live-label"><span class="dot-blink"></span> Live</div>
+              <div class="vs-row">
+                <span class="team" id="sumo-ring1-bot1-live">—</span>
+                <span class="vs-badge">VS</span>
+                <span class="team" id="sumo-ring1-bot2-live">—</span>
+              </div>
+              <div style="font-size:0.82rem;color:var(--muted);margin-top:4px" id="sumo-ring1-status-live">No active match</div>
+            </div>
+            <div class="timer-wrap"><div class="timer-display" id="sumo-timer-1">00:00.000</div></div>
+            <div class="btn-group btn-group-center">
+              <button class="btn btn-success btn-sm" onclick="sumoStartTimer(1)">▶ Start</button>
+              <button class="btn btn-warn btn-sm"    onclick="sumoStopTimer(1)">⏹ Stop</button>
+              <button class="btn btn-outline btn-sm" onclick="sumoResetTimer(1)">↺ Reset</button>
+            </div>
+            <hr class="divider">
+            <div class="form-row">
+              <div class="form-group"><label>Bot 1</label><select id="sumo-ring1-bot1"><option value="">Select Bot 1</option></select></div>
+              <div class="form-group"><label>Bot 2</label><select id="sumo-ring1-bot2"><option value="">Select Bot 2</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Group / Stage</label>
+                <select id="sumo-ring1-group">
+                  <option value="A">Group A — Ring 1</option>
+                  <option value="B">Group B — Ring 2</option>
+                  <option value="Final">🏆 Grand Final</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Round</label><input id="sumo-ring1-round" type="number" min="1" value="1" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Duration (s)</label><input id="sumo-ring1-duration" type="number" step="0.1" min="0" placeholder="0.0" /></div>
+              <div class="form-group"><label>Winner</label><select id="sumo-ring1-winner"><option value="">Select Winner</option><option value="bot1">Bot 1</option><option value="bot2">Bot 2</option><option value="draw">Draw</option><option value="double-knockout">Double KO</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Win Method</label><select id="sumo-ring1-method"><option value="push-out">Push Out</option><option value="knockout">Knockout</option><option value="technical">Technical</option><option value="timeout">Timeout</option><option value="disqualification">DQ</option><option value="forfeit">Forfeit</option></select></div>
+              <div class="form-group"><label>Notes</label><input id="sumo-ring1-notes" type="text" placeholder="Optional notes" /></div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-outline btn-sm" onclick="sumoSetupMatch(1)">⚙️ Setup Match</button>
+              <button class="btn btn-success btn-sm" onclick="sumoSaveResult(1)">✅ Save Result</button>
+              <button class="btn btn-danger  btn-sm" onclick="sumoClearMatch(1)">Clear</button>
+            </div>
+          </div>
+
+          <!-- Ring 2 — Group B -->
+          <div class="arena-card ring-2">
+            <div class="arena-label"><span class="dot"></span> Ring 2 — Group B Matches</div>
+            <div class="live-box" style="border-color:rgba(255,45,117,0.2);background:linear-gradient(135deg,rgba(255,45,117,0.05),rgba(240,147,251,0.04))">
+              <div class="live-label"><span class="dot-blink"></span> Live</div>
+              <div class="vs-row">
+                <span class="team" id="sumo-ring2-bot1-live">—</span>
+                <span class="vs-badge" style="background:linear-gradient(135deg,#f093fb,#ff2d75)">VS</span>
+                <span class="team" id="sumo-ring2-bot2-live">—</span>
+              </div>
+              <div style="font-size:0.82rem;color:var(--muted);margin-top:4px" id="sumo-ring2-status-live">No active match</div>
+            </div>
+            <div class="timer-wrap"><div class="timer-display" id="sumo-timer-2">00:00.000</div></div>
+            <div class="btn-group btn-group-center">
+              <button class="btn btn-success btn-sm" onclick="sumoStartTimer(2)">▶ Start</button>
+              <button class="btn btn-warn btn-sm"    onclick="sumoStopTimer(2)">⏹ Stop</button>
+              <button class="btn btn-outline btn-sm" onclick="sumoResetTimer(2)">↺ Reset</button>
+            </div>
+            <hr class="divider">
+            <div class="form-row">
+              <div class="form-group"><label>Bot 1</label><select id="sumo-ring2-bot1"><option value="">Select Bot 1</option></select></div>
+              <div class="form-group"><label>Bot 2</label><select id="sumo-ring2-bot2"><option value="">Select Bot 2</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Group / Stage</label>
+                <select id="sumo-ring2-group">
+                  <option value="A">Group A — Ring 1</option>
+                  <option value="B" selected>Group B — Ring 2</option>
+                  <option value="Final">🏆 Grand Final</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Round</label><input id="sumo-ring2-round" type="number" min="1" value="1" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Duration (s)</label><input id="sumo-ring2-duration" type="number" step="0.1" min="0" placeholder="0.0" /></div>
+              <div class="form-group"><label>Winner</label><select id="sumo-ring2-winner"><option value="">Select Winner</option><option value="bot1">Bot 1</option><option value="bot2">Bot 2</option><option value="draw">Draw</option><option value="double-knockout">Double KO</option></select></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Win Method</label><select id="sumo-ring2-method"><option value="push-out">Push Out</option><option value="knockout">Knockout</option><option value="technical">Technical</option><option value="timeout">Timeout</option><option value="disqualification">DQ</option><option value="forfeit">Forfeit</option></select></div>
+              <div class="form-group"><label>Notes</label><input id="sumo-ring2-notes" type="text" placeholder="Optional notes" /></div>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-outline btn-sm" onclick="sumoSetupMatch(2)">⚙️ Setup Match</button>
+              <button class="btn btn-success btn-sm" onclick="sumoSaveResult(2)">✅ Save Result</button>
+              <button class="btn btn-danger  btn-sm" onclick="sumoClearMatch(2)">Clear</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ── STEP 4: GRAND FINAL BANNER ── -->
+        <div class="section-label">Step 4 — Grand Final</div>
+        <div id="sumo-grand-final-card" style="background:linear-gradient(135deg,rgba(102,126,234,0.08),rgba(255,45,117,0.06));border:2px solid rgba(102,126,234,0.3);border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;text-align:center">
+          <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:var(--purple);margin-bottom:12px">🏆 Grand Final Match-Up</div>
+          <div style="display:flex;align-items:center;justify-content:center;gap:20px;flex-wrap:wrap">
+            <div style="text-align:center">
+              <div style="font-size:0.67rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--purple);margin-bottom:6px">🔵 Group A Winner</div>
+              <div id="sumo-finalist-a" style="font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--navy);min-width:140px;padding:10px 18px;background:rgba(102,126,234,0.08);border:1px solid rgba(102,126,234,0.25);border-radius:8px">TBD</div>
+            </div>
+            <div style="font-family:'Orbitron',sans-serif;font-size:1.3rem;font-weight:900;color:var(--muted)">VS</div>
+            <div style="text-align:center">
+              <div style="font-size:0.67rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--pink);margin-bottom:6px">🔴 Group B Winner</div>
+              <div id="sumo-finalist-b" style="font-family:'Orbitron',sans-serif;font-size:1rem;font-weight:700;color:var(--navy);min-width:140px;padding:10px 18px;background:rgba(255,45,117,0.06);border:1px solid rgba(255,45,117,0.25);border-radius:8px">TBD</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;font-size:0.8rem;color:var(--muted)">When group stages are done, set the Group / Stage dropdown on either ring to <strong>Grand Final</strong> and save the result to crown the champion.</div>
+        </div>
+
+        <!-- ── RANKINGS + MATCHES ── -->
+        <div class="two-col gap-top">
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🏆</div> Tournament Rankings</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Rank</th><th>Bot</th><th>Team</th><th>Group</th><th>W</th><th>L</th><th>Rate</th><th>Action</th></tr></thead>
+                <tbody id="sumo-rankings-body"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">📊</div> All Matches</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>#</th><th>Bot 1</th><th>Bot 2</th><th>Winner</th><th>Method</th><th>Group</th><th>Action</th></tr></thead>
+                <tbody id="sumo-matches-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== RACING ===== -->
+      <div id="panel-racing" class="event-panel">
+        <div class="panel-title">
+          <span style="font-size:2rem">🏎️</span>
+          <h2>RACING BOTS</h2>
+          <span class="panel-badge">3-Lane Mode</span>
+        </div>
+
+        <div class="card" style="margin-bottom:18px">
+          <div class="btn-group btn-group-center">
+            <button class="btn btn-success" style="font-size:0.9rem;padding:12px 28px" onclick="raceStartAll()">🏁 Start All Active Timers</button>
+            <button class="btn btn-primary" onclick="raceSaveAll()">💾 Save All Results</button>
+            <button class="btn btn-outline" onclick="raceClearAll()">Clear All Lanes</button>
+          </div>
+        </div>
+
+        <div class="lane-cards">
+          <!-- Lane 1 -->
+          <div class="lane-card lane-1">
+            <div class="lane-label">🏁 Lane 1</div>
+            <div class="lane-timer" id="race-timer-1">00:00.000</div>
+            <div class="btn-group btn-group-center" style="margin-bottom:14px">
+              <button class="btn btn-success btn-sm" onclick="raceStartTimer(1)">▶</button>
+              <button class="btn btn-warn btn-sm"    onclick="raceStopTimer(1)">⏹</button>
+              <button class="btn btn-outline btn-sm" onclick="raceResetTimer(1)">↺</button>
+            </div>
+            <div class="form-group"><label>Bot Name</label><input id="race-bot1-name" type="text" placeholder="Bot name" /></div>
+            <div class="form-group"><label>Team</label><input id="race-bot1-team" type="text" placeholder="Team name" /></div>
+            <div class="form-group"><label>Time (seconds)</label><input id="race-bot1-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
+            <div class="form-group"><label>Status</label><select id="race-bot1-status"><option value="completed">Completed</option><option value="dnf">Did Not Finish</option><option value="disqualified">Disqualified</option></select></div>
+            <button class="btn btn-success btn-full" onclick="raceFinishBot(1)">✅ Finish Lane 1</button>
+            <div id="race-bot1-info" style="text-align:center;margin-top:8px;font-size:0.8rem;color:var(--muted)">Waiting...</div>
+          </div>
+
+          <!-- Lane 2 -->
+          <div class="lane-card lane-2">
+            <div class="lane-label" style="color:#11998e">🏁 Lane 2</div>
+            <div class="lane-timer" id="race-timer-2">00:00.000</div>
+            <div class="btn-group btn-group-center" style="margin-bottom:14px">
+              <button class="btn btn-success btn-sm" onclick="raceStartTimer(2)">▶</button>
+              <button class="btn btn-warn btn-sm"    onclick="raceStopTimer(2)">⏹</button>
+              <button class="btn btn-outline btn-sm" onclick="raceResetTimer(2)">↺</button>
+            </div>
+            <div class="form-group"><label>Bot Name</label><input id="race-bot2-name" type="text" placeholder="Bot name" /></div>
+            <div class="form-group"><label>Team</label><input id="race-bot2-team" type="text" placeholder="Team name" /></div>
+            <div class="form-group"><label>Time (seconds)</label><input id="race-bot2-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
+            <div class="form-group"><label>Status</label><select id="race-bot2-status"><option value="completed">Completed</option><option value="dnf">Did Not Finish</option><option value="disqualified">Disqualified</option></select></div>
+            <button class="btn btn-success btn-full" onclick="raceFinishBot(2)">✅ Finish Lane 2</button>
+            <div id="race-bot2-info" style="text-align:center;margin-top:8px;font-size:0.8rem;color:var(--muted)">Waiting...</div>
+          </div>
+
+          <!-- Lane 3 -->
+          <div class="lane-card lane-3">
+            <div class="lane-label" style="color:#c2185b">🏁 Lane 3 <span style="font-size:0.6rem;color:var(--muted)">(optional)</span></div>
+            <div class="lane-timer" id="race-timer-3">00:00.000</div>
+            <div class="btn-group btn-group-center" style="margin-bottom:14px">
+              <button class="btn btn-success btn-sm" onclick="raceStartTimer(3)">▶</button>
+              <button class="btn btn-warn btn-sm"    onclick="raceStopTimer(3)">⏹</button>
+              <button class="btn btn-outline btn-sm" onclick="raceResetTimer(3)">↺</button>
+            </div>
+            <div class="form-group"><label>Bot Name</label><input id="race-bot3-name" type="text" placeholder="Leave empty if unused" /></div>
+            <div class="form-group"><label>Team</label><input id="race-bot3-team" type="text" placeholder="Team name" /></div>
+            <div class="form-group"><label>Time (seconds)</label><input id="race-bot3-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
+            <div class="form-group"><label>Status</label><select id="race-bot3-status"><option value="completed">Completed</option><option value="dnf">Did Not Finish</option><option value="disqualified">Disqualified</option></select></div>
+            <button class="btn btn-success btn-full" onclick="raceFinishBot(3)">✅ Finish Lane 3</button>
+            <div id="race-bot3-info" style="text-align:center;margin-top:8px;font-size:0.8rem;color:var(--muted)">Not used</div>
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🤖</div> Bot Registration</div>
+            <div class="form-row">
+              <div class="form-group"><label>Bot Name</label><input id="race-new-bot" type="text" placeholder="Bot name" /></div>
+              <div class="form-group"><label>Team</label><input id="race-bot-team" type="text" placeholder="Team name" /></div>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="raceAddBot()">+ Register Bot</button>
+            <div class="reg-teams-panel" style="margin-top:14px">
+              <div class="rtp-header">📋 Registered Bots — click to load into lane</div>
+              <ul class="item-list" id="race-bots-list"></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🏆</div> Final Results</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Pos</th><th>Bot</th><th>Team</th><th>Time</th><th>Status</th><th>Action</th></tr></thead>
+                <tbody id="race-results-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== BATTLEBOTS ===== -->
+      <div id="panel-battle" class="event-panel">
+        <div class="panel-title"><span style="font-size:2rem">⚔️</span><h2>BATTLEBOTS JUDGING</h2></div>
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-header-icon">⏱</div> Match Timer</div>
+              <div class="timer-wrap"><div class="timer-display" id="battle-timer">03:00</div></div>
+              <div class="btn-group btn-group-center">
+                <button class="btn btn-success btn-sm" onclick="battleStartTimer()">▶ Start</button>
+                <button class="btn btn-warn btn-sm"    onclick="battlePauseTimer()">⏸ Pause</button>
+                <button class="btn btn-outline btn-sm" onclick="battleResetTimer()">↺ Reset</button>
+              </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="card-header"><div class="card-header-icon">⚙️</div> Match Setup</div>
+              <div class="form-row">
+                <div class="form-group"><label>Bot 1 Name</label><input id="battle-bot1-name" type="text" placeholder="Bot 1" /></div>
+                <div class="form-group"><label>Bot 1 Team</label><input id="battle-bot1-team" type="text" placeholder="Team 1" /></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Bot 2 Name</label><input id="battle-bot2-name" type="text" placeholder="Bot 2" /></div>
+                <div class="form-group"><label>Bot 2 Team</label><input id="battle-bot2-team" type="text" placeholder="Team 2" /></div>
+              </div>
+              <div class="form-group">
+                <label>Match Result</label>
+                <select id="battle-match-result">
+                  <option value="">Select Result</option>
+                  <option value="bot1-ko">Bot 1 Wins (KO)</option>
+                  <option value="bot2-ko">Bot 2 Wins (KO)</option>
+                  <option value="judges">Judges Decision</option>
+                  <option value="draw">Draw</option>
+                </select>
+              </div>
+              <button class="btn btn-outline btn-full" onclick="battleUpdateLive()">📡 Update Live Match</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">📊</div> Judging Scores</div>
+            <div class="score-grid">
+              <div class="score-box">
+                <div class="score-box-title" style="color:var(--purple)">🤖 Bot 1</div>
+                <div class="form-group"><label>Damage (0–5)</label><input id="b1-damage" type="number" min="0" max="5" value="0" oninput="battleUpdateTotals()" /></div>
+                <div class="form-group"><label>Aggression (0–3)</label><input id="b1-aggression" type="number" min="0" max="3" value="0" oninput="battleUpdateTotals()" /></div>
+                <div class="form-group"><label>Control (0–3)</label><input id="b1-control" type="number" min="0" max="3" value="0" oninput="battleUpdateTotals()" /></div>
+                <div class="form-group"><label>Strategy (0–2)</label><input id="b1-strategy" type="number" min="0" max="2" value="0" oninput="battleUpdateTotals()" /></div>
+                <div class="score-total">Total: <span id="b1-total">0</span> / 13</div>
+              </div>
+              <div class="score-box">
+                <div class="score-box-title" style="color:#c05621">🤖 Bot 2</div>
+                <div class="form-group"><label>Damage (0–5)</label><input id="b2-damage" type="number" min="0" max="5" value="0" oninput="battleUpdateTotals()" /></div>
+                <div class="form-group"><label>Aggression (0–3)</label><input id="b2-aggression" type="number" min="0" max="3" value="0" oninput="battleUpdateTotals()" /></div>
+                <div class="form-group"><label>Control (0–3)</label><input id="b2-control" type="number" min="0" max="3" value="0" oninput="battleUpdateTotals()" /></div>
+                <div class="form-group"><label>Strategy (0–2)</label><input id="b2-strategy" type="number" min="0" max="2" value="0" oninput="battleUpdateTotals()" /></div>
+                <div class="score-total" style="border-color:rgba(192,86,33,0.3);color:#c05621">Total: <span id="b2-total">0</span> / 13</div>
+              </div>
+            </div>
+            <div class="form-group" style="margin-top:12px"><label>Judge Notes</label><textarea id="battle-notes" rows="2" placeholder="Highlights, penalties..."></textarea></div>
+            <div class="btn-group btn-group-center">
+              <button class="btn btn-success" onclick="battleSaveResult()">✅ Save Result</button>
+              <button class="btn btn-outline" onclick="battleClearMatch()">Clear Match</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col gap-top">
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🤖</div> BattleBot Registration</div>
+            <div class="form-row">
+              <div class="form-group"><label>Bot Name</label><input id="battle-new-bot" type="text" placeholder="Bot name" /></div>
+              <div class="form-group"><label>Team</label><input id="battle-bot-team" type="text" placeholder="Team name" /></div>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="battleAddBot()">+ Register Bot</button>
+            <div class="reg-teams-panel" style="margin-top:14px">
+              <div class="rtp-header">📋 Registered Bots — click to load into match</div>
+              <ul class="item-list" id="battle-bots-list"></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🏆</div> Leaderboard</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Rank</th><th>Bot</th><th>Team</th><th>W</th><th>L</th><th>D</th><th>Pts</th></tr></thead>
+                <tbody id="battle-leaderboard-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card gap-top">
+          <div class="card-header"><div class="card-header-icon">📋</div> Match Results</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Bot 1</th><th>Score</th><th>Bot 2</th><th>Score</th><th>Winner</th><th>Type</th><th>Action</th></tr></thead>
+              <tbody id="battle-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== MAZE ===== -->
+      <div id="panel-maze" class="event-panel">
+        <div class="panel-title"><span style="font-size:2rem">🧩</span><h2>MAZE SOLVING BOTS</h2></div>
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-header-icon">⏱</div> Run Timer</div>
+              <div class="timer-wrap"><div class="timer-display" id="maze-timer">00:00.000</div></div>
+              <div class="btn-group btn-group-center">
+                <button class="btn btn-success btn-sm" onclick="mazeStartTimer()">▶ Start</button>
+                <button class="btn btn-warn btn-sm"    onclick="mazeStopTimer()">⏹ Stop</button>
+                <button class="btn btn-outline btn-sm" onclick="mazeResetTimer()">↺ Reset</button>
+              </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="card-header"><div class="card-header-icon">📡</div> Current Run</div>
+              <div id="maze-current-run-display" style="text-align:center;padding:14px;color:var(--muted);font-size:0.88rem;background:var(--light);border-radius:8px">No active run</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🎮</div> Run Management</div>
+            <div class="form-row">
+              <div class="form-group"><label>Bot Name</label><input id="maze-bot-name" type="text" placeholder="Bot name" /></div>
+              <div class="form-group"><label>Team</label><input id="maze-team-name" type="text" placeholder="Team name" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Attempt #</label><input id="maze-attempt-num" type="number" min="1" max="3" value="1" /></div>
+              <div class="form-group"><label>Time (seconds)</label><input id="maze-run-time" type="number" step="0.001" min="0" placeholder="0.000" /></div>
+            </div>
+            <div class="form-group">
+              <label>Status</label>
+              <select id="maze-run-status">
+                <option value="completed">Completed</option>
+                <option value="failed">Failed</option>
+                <option value="timeout">Timeout</option>
+                <option value="collision">Collision / Stuck</option>
+                <option value="disqualified">Disqualified</option>
+              </select>
+            </div>
+            <div class="btn-group">
+              <button class="btn btn-primary btn-sm"  onclick="mazeSaveRun()">💾 Save Run</button>
+              <button class="btn btn-success btn-sm"  onclick="mazeFinishBot()">✅ Finish All Attempts</button>
+              <button class="btn btn-outline btn-sm"  onclick="mazeClearRun()">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col gap-top">
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🤖</div> Bot Registration</div>
+            <div class="form-row">
+              <div class="form-group"><label>Bot Name</label><input id="maze-new-bot" type="text" placeholder="Bot name" /></div>
+              <div class="form-group"><label>Team</label><input id="maze-bot-team" type="text" placeholder="Team name" /></div>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="mazeAddBot()">+ Add Bot</button>
+            <div class="reg-teams-panel" style="margin-top:14px">
+              <div class="rtp-header">📋 Registered Bots</div>
+              <ul class="item-list" id="maze-bots-list"></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🏆</div> Final Results — Best Times</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Pos</th><th>Bot</th><th>Team</th><th>Best Time</th><th>Attempts</th><th>Rate</th><th>Action</th></tr></thead>
+                <tbody id="maze-results-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card gap-top">
+          <div class="card-header"><div class="card-header-icon">📋</div> All Attempts</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Bot</th><th>Team</th><th>Attempt</th><th>Time</th><th>Status</th><th>Timestamp</th><th>Action</th></tr></thead>
+              <tbody id="maze-attempts-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== BALLOON ===== -->
+      <div id="panel-balloon" class="event-panel">
+        <div class="panel-title">
+          <span style="font-size:2rem">🎈</span>
+          <h2>BALLOON COMBAT LEAGUE</h2>
+          <span class="panel-badge">Free-For-All · Last Bot Standing</span>
+        </div>
+
+        <!-- Row 1: Timer + Live Arena -->
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-header-icon">⏱</div> Round Timer</div>
+              <div class="timer-wrap"><div class="timer-display" id="balloon-timer">03:00</div></div>
+              <div id="balloon-match-status" style="text-align:center;color:var(--muted);font-size:0.88rem;margin:8px 0 4px">Waiting for round...</div>
+              <div class="btn-group btn-group-center">
+                <button class="btn btn-success btn-sm" onclick="balloonStartMatch()">🏁 Start Round</button>
+                <button class="btn btn-warn btn-sm"    onclick="balloonPauseMatch()">⏸ Pause</button>
+                <button class="btn btn-outline btn-sm" onclick="balloonResetMatch()">↺ Reset</button>
+              </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="card-header"><div class="card-header-icon">⚙️</div> Round Setup</div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label>Round Number</label>
+                  <input id="balloon-round-num" type="number" min="1" value="1" />
+                </div>
+                <div class="form-group">
+                  <label>Round Type</label>
+                  <select id="balloon-round-type">
+                    <option value="qualifier">Qualifier</option>
+                    <option value="semifinal">Semi-Final</option>
+                    <option value="final">Final</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group"><label>Judge Notes</label><textarea id="balloon-judge-notes" rows="2" placeholder="Round notes, penalties..."></textarea></div>
+              <div class="btn-group">
+                <button class="btn btn-primary btn-sm" onclick="balloonSetupRound()">✅ Setup Round</button>
+                <button class="btn btn-success" onclick="balloonSaveResult()">💾 Save Round Result</button>
+                <button class="btn btn-outline" onclick="balloonClearMatch()">Clear</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Arena — all bots in the round -->
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🎈</div> Live Arena — All Bots</div>
+            <div id="balloon-arena-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px;margin-top:8px;min-height:80px">
+              <div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:0.85rem;padding:20px 0">Setup a round to see bots here</div>
+            </div>
+            <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--border)">
+              <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px">Elimination Order</div>
+              <div id="balloon-elim-order" style="font-size:0.82rem;color:var(--text);min-height:24px">—</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Registration + Leaderboard -->
+        <div class="two-col gap-top">
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🤖</div> Bot Registration</div>
+            <div class="form-row">
+              <div class="form-group"><label>Bot Name</label><input id="balloon-new-bot" type="text" placeholder="Bot name" /></div>
+              <div class="form-group"><label>Team</label><input id="balloon-bot-team" type="text" placeholder="Team name" /></div>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="balloonAddBot()">+ Register Bot</button>
+            <div class="reg-teams-panel" style="margin-top:14px">
+              <div class="rtp-header">📋 Registered Bots — check to add to round</div>
+              <ul class="item-list" id="balloon-bots-list"></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🏆</div> Leaderboard</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Rank</th><th>Bot</th><th>Team</th><th>Wins</th><th>Pops Made</th><th>Survived</th><th>Best Time</th></tr></thead>
+                <tbody id="balloon-leaderboard-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Round Results -->
+        <div class="card gap-top">
+          <div class="card-header"><div class="card-header-icon">📋</div> Round Results</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Round</th><th>Type</th><th>Winner</th><th>Participants</th><th>Eliminations</th><th>Duration</th><th>Action</th></tr></thead>
+              <tbody id="balloon-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== FIRE RESCUE ===== -->
+      <div id="panel-fire" class="event-panel">
+        <div class="panel-title">
+          <span style="font-size:2rem">🔥</span>
+          <h2>FIRE RESCUE BOTS</h2>
+          <span class="panel-badge">5-min Max · Water Extinguishing</span>
+        </div>
+        <div class="two-col">
+          <div>
+            <div class="card">
+              <div class="card-header"><div class="card-header-icon">⏱</div> Match Timer (5:00)</div>
+              <div class="timer-wrap"><div class="timer-display" id="fire-timer">05:00</div></div>
+              <div id="fire-match-status" style="text-align:center;color:var(--muted);font-size:0.88rem;margin:8px 0 4px">Waiting for match...</div>
+              <div class="btn-group btn-group-center">
+                <button class="btn btn-success btn-sm" onclick="fireStartTimer()">▶ Start</button>
+                <button class="btn btn-warn btn-sm"    onclick="firePauseTimer()">⏸ Pause</button>
+                <button class="btn btn-outline btn-sm" onclick="fireResetTimer()">↺ Reset</button>
+              </div>
+            </div>
+            <div class="card" style="margin-top:16px">
+              <div class="card-header"><div class="card-header-icon">🔥</div> Live Arena Status</div>
+              <div style="display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:10px;margin-bottom:14px">
+                <div style="text-align:center">
+                  <div style="font-size:1.5rem;margin-bottom:4px">🤖</div>
+                  <div id="fire-bot1-live-name" style="font-weight:700;color:var(--navy);font-size:0.9rem">Team A</div>
+                  <div id="fire-bot1-live-status" style="font-size:0.75rem;color:var(--muted)">Waiting...</div>
+                </div>
+                <span class="vs-badge">VS</span>
+                <div style="text-align:center">
+                  <div style="font-size:1.5rem;margin-bottom:4px">🤖</div>
+                  <div id="fire-bot2-live-name" style="font-weight:700;color:var(--navy);font-size:0.9rem">Team B</div>
+                  <div id="fire-bot2-live-status" style="font-size:0.75rem;color:var(--muted)">Waiting...</div>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="fire-pct-bar" id="fire-bar-a">
+                  <div>
+                    <div style="font-size:0.67rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Team A Fire</div>
+                    <div class="fire-pct-num" id="fire-team-a-pct">0%</div>
+                  </div>
+                  <span style="font-size:1.5rem" id="fire-team-a-icon">🔥</span>
+                </div>
+                <div class="fire-pct-bar" id="fire-bar-b">
+                  <div>
+                    <div style="font-size:0.67rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:2px">Team B Fire</div>
+                    <div class="fire-pct-num" id="fire-team-b-pct">0%</div>
+                  </div>
+                  <span style="font-size:1.5rem" id="fire-team-b-icon">🔥</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🎮</div> Match Management</div>
+            <div class="form-row">
+              <div class="form-group"><label>Team A Bot Name</label><input id="fire-bot1-name" type="text" placeholder="Bot / Team A" /></div>
+              <div class="form-group"><label>Team A</label><input id="fire-bot1-team" type="text" placeholder="Team A" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Team B Bot Name</label><input id="fire-bot2-name" type="text" placeholder="Bot / Team B" /></div>
+              <div class="form-group"><label>Team B</label><input id="fire-bot2-team" type="text" placeholder="Team B" /></div>
+            </div>
+            <button class="btn btn-outline btn-full" onclick="fireSetupMatch()" style="margin-bottom:14px">✅ Setup Match</button>
+            <hr class="divider">
+            <div class="form-row">
+              <div class="form-group"><label>Team A — Fire Extinguished %</label><input id="fire-team-a-extinguished" type="number" min="0" max="100" value="0" oninput="fireUpdatePct('a')" /></div>
+              <div class="form-group"><label>Team B — Fire Extinguished %</label><input id="fire-team-b-extinguished" type="number" min="0" max="100" value="0" oninput="fireUpdatePct('b')" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group"><label>Team A — Time (s)</label><input id="fire-team-a-time" type="number" step="0.1" min="0" placeholder="If fully extinguished" /></div>
+              <div class="form-group"><label>Team B — Time (s)</label><input id="fire-team-b-time" type="number" step="0.1" min="0" placeholder="If fully extinguished" /></div>
+            </div>
+            <div class="form-row">
+              <div class="form-group">
+                <label>Winner</label>
+                <select id="fire-winner">
+                  <option value="">Select Winner</option>
+                  <option value="teamA">Team A</option>
+                  <option value="teamB">Team B</option>
+                  <option value="draw">Draw</option>
+                  <option value="timeout">Timeout</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>Match Outcome</label>
+                <select id="fire-outcome">
+                  <option value="full-extinguish">Full Extinguish</option>
+                  <option value="partial">Partial — Most Reduction</option>
+                  <option value="timeout">Timeout</option>
+                  <option value="disqualification">Disqualification</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group"><label>Judge Notes</label><textarea id="fire-judge-notes" rows="2" placeholder="Penalties, accuracy, autonomy bonus..."></textarea></div>
+            <div class="btn-group">
+              <button class="btn btn-success" onclick="fireSaveResult()">💾 Save Match Result</button>
+              <button class="btn btn-outline" onclick="fireClearMatch()">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="two-col gap-top">
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🤖</div> Team / Bot Registration</div>
+            <div class="form-row">
+              <div class="form-group"><label>Bot Name</label><input id="fire-new-bot" type="text" placeholder="Bot name" /></div>
+              <div class="form-group"><label>Team</label><input id="fire-bot-team" type="text" placeholder="Team name" /></div>
+            </div>
+            <button class="btn btn-success btn-sm" onclick="fireAddBot()">+ Register Bot</button>
+            <div class="reg-teams-panel" style="margin-top:14px">
+              <div class="rtp-header">📋 Registered Bots — click to load into match</div>
+              <ul class="item-list" id="fire-bots-list"></ul>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><div class="card-header-icon">🏆</div> Leaderboard</div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Rank</th><th>Bot</th><th>Team</th><th>W</th><th>L</th><th>Avg %</th><th>Best Time</th></tr></thead>
+                <tbody id="fire-leaderboard-body"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div class="card gap-top">
+          <div class="card-header"><div class="card-header-icon">📋</div> Match Results</div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>#</th><th>Team A</th><th>A%</th><th>A Time</th><th>Team B</th><th>B%</th><th>B Time</th><th>Winner</th><th>Outcome</th><th>Action</th></tr></thead>
+              <tbody id="fire-results-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /admin-main -->
+  </div><!-- /dashboard-section -->
+
+  <!-- ======== REGISTRATION SECTION ======== -->
+  <div id="registration-section" class="page-section">
+    <div class="reg-hero">
+      <h2>Participant Registration</h2>
+      <p>Register a team for one or more competition categories. Each registration is sent directly to the event's Firebase database.</p>
+    </div>
+
+    <!-- Login required notice -->
+    <div id="reg-login-notice" style="text-align:center;padding:40px;background:white;border:1px solid var(--border);border-radius:14px;max-width:480px;margin:0 auto 32px;box-shadow:var(--shadow-sm)">
+      <div style="font-size:2.5rem;margin-bottom:12px">🔐</div>
+      <h3 style="font-family:'Orbitron',sans-serif;font-size:1rem;color:var(--navy);margin-bottom:8px">Login Required</h3>
+      <p style="color:var(--muted);font-size:0.9rem;margin-bottom:18px">Please sign in using the Match Control tab to access registration.</p>
+      <button class="btn btn-primary" onclick="switchPageTab('dashboard')">Go to Login</button>
+    </div>
+
+    <div id="reg-main" style="display:none">
+      <!-- Registration Form -->
+      <div class="reg-card">
+        <div class="section-label">Registration Form</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Team Name <span style="color:var(--danger)">*</span></label>
+            <input id="reg-team-name" type="text" placeholder="e.g. Team Alpha" />
+          </div>
+          <div class="form-group">
+            <label>Robot / Bot Name <span style="color:var(--danger)">*</span></label>
+            <input id="reg-bot-name" type="text" placeholder="e.g. IronFist 3.0" />
+          </div>
+        </div>
+        <div class="form-row-3">
+          <div class="form-group">
+            <label>Contact Person</label>
+            <input id="reg-contact" type="text" placeholder="Team lead name" />
+          </div>
+          <div class="form-group">
+            <label>Phone / WhatsApp</label>
+            <input id="reg-phone" type="tel" placeholder="+254 7XX XXX XXX" />
+          </div>
+          <div class="form-group">
+            <label>School / Organisation</label>
+            <input id="reg-school" type="text" placeholder="School or org name" />
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:6px">
+          <label>Select Categories <span style="color:var(--danger)">*</span> <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.78rem;color:var(--muted)">(choose one or more)</span></label>
+          <div class="category-grid">
+            <div class="category-chip" onclick="toggleCategory(this,'soccer')" data-cat="soccer">
+              <span class="chip-icon">⚽</span><span class="chip-name">Soccerbots</span>
+            </div>
+            <div class="category-chip" onclick="toggleCategory(this,'sumo')" data-cat="sumo">
+              <span class="chip-icon">🤼</span><span class="chip-name">Sumo Bots</span>
+            </div>
+            <div class="category-chip" onclick="toggleCategory(this,'racing')" data-cat="racing">
+              <span class="chip-icon">🏎️</span><span class="chip-name">Racing Bots</span>
+            </div>
+            <div class="category-chip" onclick="toggleCategory(this,'battle')" data-cat="battle">
+              <span class="chip-icon">⚔️</span><span class="chip-name">BattleBots</span>
+            </div>
+            <div class="category-chip" onclick="toggleCategory(this,'maze')" data-cat="maze">
+              <span class="chip-icon">🧩</span><span class="chip-name">Maze Bots</span>
+            </div>
+            <div class="category-chip" onclick="toggleCategory(this,'balloon')" data-cat="balloon">
+              <span class="chip-icon">🎈</span><span class="chip-name">Balloon Combat</span>
+            </div>
+            <div class="category-chip" onclick="toggleCategory(this,'fire')" data-cat="fire">
+              <span class="chip-icon">🔥</span><span class="chip-name">Fire Rescue</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group" style="margin-top:14px">
+          <label>Additional Notes (optional)</label>
+          <textarea id="reg-notes" rows="2" placeholder="Weight class, special requirements, etc."></textarea>
+        </div>
+
+        <div class="btn-group" style="margin-top:8px">
+          <button class="btn btn-primary" style="padding:12px 32px;font-size:0.88rem" onclick="submitRegistration()">
+            🚀 Submit Registration
+          </button>
+          <button class="btn btn-outline" onclick="clearRegForm()">Clear Form</button>
+        </div>
+
+        <div id="reg-success" class="reg-success">
+          <div class="success-icon">🎉</div>
+          <h3>Registration Successful!</h3>
+          <p id="reg-success-msg">Team has been registered.</p>
+        </div>
+      </div>
+
+      <!-- Remove Teams Section -->
+      <div class="remove-section" style="margin-bottom:28px">
+        <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:18px">
+          <div>
+            <div style="font-size:0.7rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--danger);margin-bottom:4px">⚠ Team Removal</div>
+            <div style="font-size:0.88rem;color:var(--muted)">Remove a registered team — use if a robot malfunctions or a team withdraws.</div>
+          </div>
+          <select id="reg-filter-cat" onchange="loadRegistered()" style="padding:8px 14px;border:1px solid var(--border2);border-radius:8px;font-size:0.85rem;outline:none;font-family:inherit">
+            <option value="all">All Categories</option>
+            <option value="soccer">⚽ Soccerbots</option>
+            <option value="sumo">🤼 Sumo Bots</option>
+            <option value="racing">🏎️ Racing Bots</option>
+            <option value="battle">⚔️ BattleBots</option>
+            <option value="maze">🧩 Maze Bots</option>
+            <option value="balloon">🎈 Balloon Combat</option>
+            <option value="fire">🔥 Fire Rescue</option>
+          </select>
+          <button class="btn btn-outline btn-sm" onclick="loadRegistered()">↻ Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>#</th><th>Team</th><th>Bot Name</th><th>Contact</th><th>School</th><th>Categories</th><th>Registered</th><th>Remove</th></tr></thead>
+            <tbody id="reg-table-body"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div><!-- /reg-main -->
+  </div><!-- /registration-section -->
+
+</div><!-- /page-wrapper -->
+
+<script>
+// ============================================================
+// FIREBASE CONFIGS
+// ============================================================
+const FIREBASE_CONFIGS = {
+  soccer: {
+    apiKey:"AIzaSyC_cluzI8epSfItRlgbqUzRBl9mTUA1CIU",
+    authDomain:"robo-football.firebaseapp.com",
+    projectId:"robo-football",
+    storageBucket:"robo-football.firebasestorage.app",
+    messagingSenderId:"137309585195",
+    appId:"1:137309585195:web:be18ee9134d9c9605a4f6e"
+  },
+  balloon: {
+    apiKey:"AIzaSyBjCz8fNSRo1vlxjKyQDBSKy-F69gJx2Ys",
+    authDomain:"balloon-combat-l.firebaseapp.com",
+    projectId:"balloon-combat-l",
+    storageBucket:"balloon-combat-l.firebasestorage.app",
+    messagingSenderId:"133917809452",
+    appId:"1:133917809452:web:87a6c8049024d67d026a89"
+  },
+  battle: {
+    apiKey:"AIzaSyBFvK_ksB1PJJuoqzFZOlWO4RK8I6HlFd4",
+    authDomain:"battlebots-extrabotics.firebaseapp.com",
+    projectId:"battlebots-extrabotics",
+    storageBucket:"battlebots-extrabotics.firebasestorage.app",
+    messagingSenderId:"1064802523524",
+    appId:"1:1064802523524:web:2c44d97a7d96d60f7a25d1"
+  },
+  maze: {
+    apiKey:"AIzaSyB8Ur_1rSdr6UKL-JMn008Q5XPLfsaKQ4E",
+    authDomain:"mazebots.firebaseapp.com",
+    projectId:"mazebots",
+    storageBucket:"mazebots.firebasestorage.app",
+    messagingSenderId:"337950200207",
+    appId:"1:337950200207:web:38ad254fc4f595ed93bbfa"
+  },
+  racing: {
+    apiKey:"AIzaSyAgZ0xeiV4nsOTcn53jmQNhJeHQ0Lyc_oM",
+    authDomain:"racingbots.firebaseapp.com",
+    projectId:"racingbots",
+    storageBucket:"racingbots.firebasestorage.app",
+    messagingSenderId:"356635411757",
+    appId:"1:356635411757:web:01815cd438eaa1521dbfa4"
+  },
+  sumo: {
+    apiKey:"AIzaSyAp9ZqJ6oSpQlslTy6ERCTDpkyQD5wMG7w",
+    authDomain:"sumobots-79d3f.firebaseapp.com",
+    projectId:"sumobots-79d3f",
+    storageBucket:"sumobots-79d3f.firebasestorage.app",
+    messagingSenderId:"40169700396",
+    appId:"1:40169700396:web:f8ddf7cee336854512a589"
+  },
+  fire: {
+    apiKey:"AIzaSyC_cluzI8epSfItRlgbqUzRBl9mTUA1CIU",
+    authDomain:"robo-football.firebaseapp.com",
+    projectId:"robo-football",
+    storageBucket:"robo-football.firebasestorage.app",
+    messagingSenderId:"137309585195",
+    appId:"1:137309585195:web:be18ee9134d9c9605a4f6e"
+  }
+};
+
+const fbApps={}, fbDbs={}, fbAuths={};
+Object.entries(FIREBASE_CONFIGS).forEach(([name,config]) => {
+  const existing = firebase.apps.find(a => a.name === name);
+  fbApps[name] = existing || firebase.initializeApp(config, name);
+  fbDbs[name]  = firebase.firestore(fbApps[name]);
+  fbAuths[name]= firebase.auth(fbApps[name]);
+});
+// Fire shares Soccer's project
+fbApps['fire']  = fbApps['soccer'];
+fbDbs['fire']   = fbDbs['soccer'];
+fbAuths['fire'] = fbAuths['soccer'];
+
+let currentUser = null;
+let currentTab  = 'soccer';
+
+// ============================================================
+// GLOBAL AUTH  —  Signs in to ALL Firebase projects
+// ============================================================
+
+// Projects that need their own independent auth sign-in.
+// 'fire' shares the 'soccer' project, so it is intentionally excluded.
+const AUTH_PROJECTS = ['soccer', 'balloon', 'battle', 'maze', 'racing', 'sumo'];
+
+async function globalLogin() {
+  const email = document.getElementById('admin-email').value.trim();
+  const pass  = document.getElementById('admin-password').value.trim();
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  const loginBtn = document.getElementById('login-btn');
+  if (loginBtn) { loginBtn.disabled = true; loginBtn.textContent = '⏳ Signing in…'; }
+
+  const failures = [];
+  await Promise.all(AUTH_PROJECTS.map(async proj => {
+    try {
+      await fbAuths[proj].signInWithEmailAndPassword(email, pass);
+    } catch (e) {
+      // Ignore "user not found / wrong password" only for secondary projects;
+      // we still want to surface a real credential error from the primary (soccer) project.
+      if (proj === 'soccer') {
+        failures.push(e.message);
+      } else {
+        // Secondary project auth failures are non-fatal — log and continue.
+        console.warn(`[Auth] ${proj} sign-in skipped: ${e.message}`);
+      }
+    }
+  }));
+
+  if (loginBtn) { loginBtn.disabled = false; loginBtn.textContent = '🔐 Login'; }
+
+  if (failures.length > 0) {
+    errEl.textContent = 'Login failed: ' + failures[0];
+    errEl.style.display = 'block';
+  }
+}
+
+function globalLogout() {
+  AUTH_PROJECTS.forEach(proj => fbAuths[proj].signOut().catch(() => {}));
+}
+
+// Primary auth gate: driven by the soccer project (required admin).
+// When soccer is authenticated the dashboard unlocks; other projects sign in
+// in parallel above and failures are only logged, not blocking.
+fbAuths['soccer'].onAuthStateChanged(user => {
+  currentUser = user;
+  const overlay    = document.getElementById('login-overlay');
+  const adminMain  = document.getElementById('admin-main');
+  const navText    = document.getElementById('nav-user-text');
+  const emailLabel = document.getElementById('admin-user-email');
+  const regNotice  = document.getElementById('reg-login-notice');
+  const regMain    = document.getElementById('reg-main');
+
+  if (user) {
+    if (overlay)    overlay.style.display    = 'none';
+    if (adminMain)  adminMain.style.display  = 'block';
+    if (navText)    navText.textContent       = user.email;
+    if (emailLabel) emailLabel.textContent   = user.email;
+    if (regNotice)  regNotice.style.display  = 'none';
+    if (regMain)    regMain.style.display    = 'block';
+    initAllEventListeners();
+  } else {
+    if (overlay)    overlay.style.display    = 'flex';
+    if (adminMain)  adminMain.style.display  = 'none';
+    if (navText)    navText.textContent       = 'Not logged in';
+    if (emailLabel) emailLabel.textContent   = '—';
+    if (regNotice)  regNotice.style.display  = 'block';
+    if (regMain)    regMain.style.display    = 'none';
+    listenersInitialized = false;
+  }
+});
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tab) {
+  document.querySelectorAll('.event-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.event-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById('tab-'   + tab).classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  currentTab = tab;
+}
+
+function switchPageTab(tab) {
+  document.querySelectorAll('.page-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.getElementById('ptab-'  + tab).classList.add('active');
+  document.getElementById(tab + '-section').classList.add('active');
+  if (tab === 'registration' && currentUser) loadRegistered();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function fmtTime(ms) {
+  const t = ms/1000, m = Math.floor(t/60), s = Math.floor(t%60), x = Math.floor(ms%1000);
+  return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}.${String(x).padStart(3,'0')}`;
+}
+function fmtCountdown(s) {
+  const m   = Math.floor(s/60);
+  const sec = Math.floor(s%60);
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// ============================================================
+// MATRIX BACKGROUND
+// ============================================================
+function initMatrix() {
+  const canvas = document.getElementById('matrix-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
+  const letters = '01EXTRABOTICS010110';
+  const fs = 12, cols = canvas.width / fs;
+  const drops = Array(Math.floor(cols)).fill(1);
+  setInterval(() => {
+    ctx.fillStyle = 'rgba(244,246,249,0.06)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.fillStyle = '#c8d6e5';
+    ctx.font = fs + 'px monospace';
+    drops.forEach((y,i) => {
+      ctx.fillText(letters[Math.floor(Math.random()*letters.length)], i*fs, y*fs);
+      if (y*fs > canvas.height && Math.random()>0.975) drops[i]=0;
+      drops[i]++;
+    });
+  }, 33);
+  window.addEventListener('resize', () => { canvas.width=window.innerWidth; canvas.height=window.innerHeight; });
+}
+
+// ============================================================
+// =====================  SOCCERBOTS  =========================
+// ============================================================
+const sdb = fbDbs['soccer'];
+const sTimerDocs = {
+  a: sdb.collection('settings').doc('timerArenaA'),
+  b: sdb.collection('settings').doc('timerArenaB')
+};
+const sMatchDocs = {
+  a: sdb.collection('settings').doc('currentMatchA'),
+  b: sdb.collection('settings').doc('currentMatchB')
+};
+const sLiveCol    = sdb.collection('liveResults');
+const sFinalCol   = sdb.collection('finalResults');
+const sTeamsCol   = sdb.collection('teams');
+const sFixturesCol= sdb.collection('fixtures');
+
+const SOCCER_DURATION = 300;
+let sTimerData = {a:null,b:null}, sTimerIntervals = {a:null,b:null};
+
+function sCalcTimeLeft(arena) {
+  const d = sTimerData[arena];
+  if (!d || !d.startTime) return SOCCER_DURATION;
+  if (d.running) {
+    const elapsed = (Date.now() - d.startTime.toMillis())/1000 + (d.pausedAt||0);
+    return Math.max(0, SOCCER_DURATION - elapsed);
+  }
+  return Math.max(0, SOCCER_DURATION - (d.pausedAt||0));
+}
+
+function sListenTimer(arena) {
+  sTimerDocs[arena].onSnapshot(doc => {
+    sTimerData[arena] = doc.exists ? doc.data() : null;
+    const el = document.getElementById('soccer-timer-' + arena);
+    if (!el) return;
+    const t = sCalcTimeLeft(arena);
+    el.textContent = fmtCountdown(t);
+    el.classList.toggle('urgent', t <= 30 && t > 0);
+    if (sTimerIntervals[arena]) clearInterval(sTimerIntervals[arena]);
+    if (sTimerData[arena]?.running) {
+      el.classList.add('running');
+      sTimerIntervals[arena] = setInterval(() => {
+        const rem = sCalcTimeLeft(arena);
+        const e2  = document.getElementById('soccer-timer-' + arena);
+        e2.textContent = fmtCountdown(rem);
+        e2.classList.toggle('urgent', rem <= 30 && rem > 0);
+        if (rem <= 0) { clearInterval(sTimerIntervals[arena]); e2.classList.remove('running'); }
+      }, 500);
+    } else {
+      el.classList.remove('running');
+    }
+  });
+}
+
+async function soccerStartTimer(arena) {
+  const now = firebase.firestore.Timestamp.now();
+  await sTimerDocs[arena].set({ startTime:now, running:true, pausedAt: sTimerData[arena]?.pausedAt||0 });
+}
+async function soccerPauseTimer(arena) {
+  const d = sTimerData[arena];
+  if (!d?.running || !d?.startTime) return;
+  if (!confirm('Pause timer for Arena ' + arena.toUpperCase() + '?')) return;
+  const elapsed = (Date.now() - d.startTime.toMillis())/1000 + (d.pausedAt||0);
+  await sTimerDocs[arena].set({...d, running:false, pausedAt:elapsed});
+}
+async function soccerResetTimer(arena) {
+  if (!confirm('Reset timer for Arena ' + arena.toUpperCase() + '?')) return;
+  await sTimerDocs[arena].set({startTime:null, running:false, pausedAt:0});
+}
+
+function sListenLive(arena) {
+  sMatchDocs[arena].onSnapshot(doc => {
+    if (!doc.exists) {
+      document.getElementById(`soccer-${arena}-team-a-live`).textContent='—';
+      document.getElementById(`soccer-${arena}-team-b-live`).textContent='—';
+      document.getElementById(`soccer-${arena}-score-live`).textContent='— : —';
+      return;
+    }
+    const d = doc.data();
+    document.getElementById(`soccer-${arena}-team-a-live`).textContent = d.teamA||'—';
+    document.getElementById(`soccer-${arena}-team-b-live`).textContent = d.teamB||'—';
+    document.getElementById(`soccer-${arena}-score-live`).textContent  = `${d.scoreA??0} : ${d.scoreB??0}`;
+  });
+}
+
+async function soccerSaveLive(arena) {
+  const p=`soccer-${arena}-`;
+  const teamA=document.getElementById(p+'teamA').value.trim();
+  const teamB=document.getElementById(p+'teamB').value.trim();
+  const scoreA=parseInt(document.getElementById(p+'scoreA').value);
+  const scoreB=parseInt(document.getElementById(p+'scoreB').value);
+  if (!teamA||!teamB){alert('Enter both teams');return;}
+  await sLiveCol.add({teamA,teamB,scoreA:scoreA||0,scoreB:scoreB||0,arena,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await sMatchDocs[arena].set({teamA,teamB,scoreA:scoreA||0,scoreB:scoreB||0,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  alert('Live result saved for Arena '+arena.toUpperCase());
+}
+
+async function soccerEndGame(arena) {
+  if (!confirm('End game for Arena '+arena.toUpperCase()+'?')) return;
+  const p=`soccer-${arena}-`;
+  const teamA=document.getElementById(p+'teamA').value.trim();
+  const teamB=document.getElementById(p+'teamB').value.trim();
+  const scoreA=parseInt(document.getElementById(p+'scoreA').value);
+  const scoreB=parseInt(document.getElementById(p+'scoreB').value);
+  if (!teamA||!teamB){alert('Enter teams');return;}
+  await sFinalCol.add({teamA,teamB,scoreA:scoreA||0,scoreB:scoreB||0,arena,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  alert('Game ended and saved!');
+}
+
+async function soccerClearMatch(arena) {
+  if (!confirm('Clear Arena '+arena.toUpperCase()+'?')) return;
+  await sMatchDocs[arena].delete();
+  const p=`soccer-${arena}-`;
+  ['teamA','teamB','scoreA','scoreB'].forEach(f=>document.getElementById(p+f).value=['scoreA','scoreB'].includes(f)?'0':'');
+}
+
+async function soccerAddTeam() {
+  const name=document.getElementById('soccer-new-team').value.trim();
+  if (!name) return alert('Enter team name');
+  const snap=await sTeamsCol.where('name','==',name).get();
+  if (!snap.empty) return alert('Team already registered');
+  await sTeamsCol.add({name,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('soccer-new-team').value='';
+  sLoadTeams();
+}
+
+async function sLoadTeams() {
+  const snap=await sTeamsCol.get();
+  const ul=document.getElementById('soccer-teams-list');
+  ul.innerHTML='';
+  snap.forEach(doc => {
+    const d=doc.data();
+    // Support both registration-saved docs (teamName field) and manually-added docs (name field)
+    const displayName=d.teamName||d.name||'(unknown)';
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="bot-info-text">${displayName}${d.botName?` — <em style="color:var(--muted);font-size:0.8em">${d.botName}</em>`:''}</span>`;
+    const acts=document.createElement('div'); acts.className='btn-actions';
+    const btn=document.createElement('button');
+    btn.className='btn btn-primary btn-xs';
+    btn.textContent='→Team A';
+    btn.title='Load as Team A';
+    btn.onclick=()=>{ document.getElementById('soccer-a-teamA').value=displayName; };
+    acts.appendChild(btn);
+    const btn2=document.createElement('button');
+    btn2.className='btn btn-teal btn-xs';
+    btn2.textContent='→Team B';
+    btn2.title='Load as Team B';
+    btn2.onclick=()=>{ document.getElementById('soccer-a-teamB').value=displayName; };
+    acts.appendChild(btn2);
+    const rbtn=document.createElement('button');
+    rbtn.className='btn btn-danger btn-xs'; rbtn.textContent='✕';
+    rbtn.onclick=async()=>{ if(confirm(`Remove "${displayName}"?`)){ await sTeamsCol.doc(doc.id).delete(); sLoadTeams(); } };
+    acts.appendChild(rbtn); li.appendChild(acts); ul.appendChild(li);
+  });
+}
+
+async function soccerGenerateFixtures() {
+  const mode=document.getElementById('soccer-match-type').value;
+  const snap=await sTeamsCol.get();
+  let teams=snap.docs.map(d=>d.data().teamName||d.data().name).sort(()=>0.5-Math.random());
+  const tc=mode==='1v1'?2:mode==='2v2'?4:6;
+  while(teams.length>=tc){
+    await sFixturesCol.add({teams:teams.splice(0,tc),matchType:mode,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  }
+  alert('Fixtures generated!'); sLoadFixtures();
+}
+
+async function soccerClearFixtures() {
+  if (!confirm('Remove all pending fixtures?')) return;
+  const snap=await sFixturesCol.where('status','==','pending').get();
+  const batch=sdb.batch();
+  snap.forEach(d=>batch.delete(d.ref));
+  await batch.commit(); sLoadFixtures();
+}
+
+async function sLoadFixtures() {
+  const snap=await sFixturesCol.where('status','==','pending').get();
+  const ul=document.getElementById('soccer-fixtures-list');
+  ul.innerHTML='';
+  snap.forEach(doc => {
+    const d=doc.data();
+    const li=document.createElement('li');
+    li.innerHTML=`<span>${d.teams.join(' vs ')}</span>`;
+    const btn=document.createElement('button');
+    btn.className='btn btn-primary btn-sm';
+    btn.textContent='Load into Arena';
+    btn.onclick=()=>{
+      document.getElementById('soccer-a-teamA').value=d.teams[0];
+      document.getElementById('soccer-a-teamB').value=d.teams[1]||'';
+    };
+    li.appendChild(btn);
+    ul.appendChild(li);
+  });
+}
+
+function sListenFinalResults() {
+  sFinalCol.orderBy('timestamp','asc').onSnapshot(snap => {
+    const tbody=document.getElementById('soccer-results-body');
+    tbody.innerHTML='';
+    let n=1;
+    snap.forEach(doc => {
+      const d=doc.data();
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${n++}</td><td>${d.teamA}</td><td>${d.scoreA}</td><td>${d.teamB}</td><td>${d.scoreB}</td><td>${(d.arena||'').toUpperCase()}</td><td><button class="btn btn-danger btn-sm" onclick="sRemoveFinal('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+async function sRemoveFinal(id) { if(confirm('Remove result?')) await sFinalCol.doc(id).delete(); }
+
+// ============================================================
+// =====================  SUMO BOTS  ==========================
+// ============================================================
+const sudb=fbDbs['sumo'];
+const suTimerDocs={
+  1:sudb.collection('sumoSettings').doc('timerRing1'),
+  2:sudb.collection('sumoSettings').doc('timerRing2')
+};
+const suMatchDocs={
+  1:sudb.collection('sumoSettings').doc('currentMatchRing1'),
+  2:sudb.collection('sumoSettings').doc('currentMatchRing2')
+};
+const suMatchesCol=sudb.collection('sumoMatches');
+const suRankingsCol=sudb.collection('sumoRankings');
+const suBotsCol=sudb.collection('sumoBots');
+let suTimerData={1:null,2:null}, suTimerIntervals={1:null,2:null};
+// Track the session key for each ring's running interval.
+// We write a random sessionKey on start so that Firestore server-confirmation
+// snapshots (which return the same sessionKey) never cause a false restart.
+let suTimerSessionKey={1:null,2:null};
+
+// ── Auto-create required Firestore documents if they don't exist ──
+// This handles databases that previously only had a single 'matchTimer' doc.
+async function suInitFirestoreDocs() {
+  const timerDefaults = { running: false, startTime: null, finalTime: null, sessionKey: null };
+  const matchDefaults = { bot1Name: null, bot2Name: null, bot1Team: null, bot2Team: null, round: 1, status: 'idle' };
+  try {
+    for (const ring of [1, 2]) {
+      // Use set() with merge:false — this always writes, ensuring docs exist.
+      // We use set({ ...defaults }, { merge: true }) so existing live data isn't wiped.
+      const timerSnap = await suTimerDocs[ring].get();
+      if (!timerSnap.exists) {
+        await suTimerDocs[ring].set(timerDefaults);
+        console.log('[Sumo] ✅ Created timerRing' + ring);
+      } else {
+        console.log('[Sumo] timerRing' + ring + ' already exists:', timerSnap.data());
+      }
+      const matchSnap = await suMatchDocs[ring].get();
+      if (!matchSnap.exists) {
+        await suMatchDocs[ring].set(matchDefaults);
+        console.log('[Sumo] ✅ Created currentMatchRing' + ring);
+      } else {
+        console.log('[Sumo] currentMatchRing' + ring + ' already exists:', matchSnap.data());
+      }
+    }
+    console.log('[Sumo] ✅ Firestore doc init complete');
+  } catch(err) {
+    console.error('[Sumo] ❌ suInitFirestoreDocs FAILED:', err);
+    alert('Sumo Firebase init error: ' + err.message + '\n\nCheck the browser console for details.');
+  }
+}
+
+function suListenTimer(ring) {
+  suTimerDocs[ring].onSnapshot(doc => {
+    suTimerData[ring]=doc.exists?doc.data():null;
+    const el=document.getElementById('sumo-timer-'+ring);
+    if (!el) return;
+    const d=suTimerData[ring];
+
+    if(d?.running && d?.startTime){
+      const incomingKey=d.sessionKey||null;
+      // Only (re)start the interval if the sessionKey changed — i.e. a genuinely new
+      // start occurred. Server-confirmation snapshots carry the same sessionKey, so
+      // they will NOT clear the already-running interval.
+      if(suTimerSessionKey[ring] !== incomingKey){
+        if(suTimerIntervals[ring]){ clearInterval(suTimerIntervals[ring]); suTimerIntervals[ring]=null; }
+        suTimerSessionKey[ring]=incomingKey;
+        const startMs=d.startTime.toMillis();
+        el.classList.add('running');
+        suTimerIntervals[ring]=setInterval(()=>{
+          const elapsed=Date.now()-startMs;
+          document.getElementById('sumo-timer-'+ring).textContent=fmtTime(elapsed);
+        },10);
+      }
+      // Always keep display live even if interval was already running
+    } else {
+      // Timer stopped or reset — clear interval and update display
+      if(suTimerIntervals[ring]){ clearInterval(suTimerIntervals[ring]); suTimerIntervals[ring]=null; }
+      suTimerSessionKey[ring]=null;
+      el.classList.remove('running');
+      el.textContent=d?.finalTime?fmtTime(d.finalTime):'00:00.000';
+    }
+  });
+}
+
+async function sumoStartTimer(ring) {
+  // Guard: don't overwrite if already running (prevents double-click / reconnect reset)
+  if(suTimerData[ring]?.running) return;
+  // Generate a unique sessionKey so server-confirmation snapshots can be identified
+  // and won't incorrectly trigger an interval restart.
+  const sessionKey = Date.now().toString(36) + '-' + ring;
+  await suTimerDocs[ring].set({startTime:firebase.firestore.Timestamp.now(),running:true,finalTime:null,sessionKey});
+}
+async function sumoStopTimer(ring) {
+  const d=suTimerData[ring];
+  if(!d?.running) return;
+  const ft=Date.now()-d.startTime.toMillis();
+  // Spread existing data (preserves sessionKey and any other fields) then override
+  await suTimerDocs[ring].set({...d, running:false, finalTime:ft});
+  document.getElementById(`sumo-ring${ring}-duration`).value=(ft/1000).toFixed(1);
+}
+async function sumoResetTimer(ring) {
+  if(!confirm('Reset Ring '+ring+' timer?')) return;
+  await suTimerDocs[ring].set({startTime:null,running:false,finalTime:null});
+}
+
+async function sumoSetupMatch(ring) {
+  const b1=document.getElementById(`sumo-ring${ring}-bot1`).value;
+  const b2=document.getElementById(`sumo-ring${ring}-bot2`).value;
+  if(!b1||!b2){alert('Select both bots');return;}
+  if(b1===b2){alert('Cannot fight itself!');return;}
+  const d1=JSON.parse(b1),d2=JSON.parse(b2);
+  const round=parseInt(document.getElementById(`sumo-ring${ring}-round`).value);
+  await suMatchDocs[ring].set({bot1Name:d1.botName,bot1Team:d1.teamName,bot2Name:d2.botName,bot2Team:d2.teamName,round,status:'ready',setupAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById(`sumo-ring${ring}-bot1-live`).textContent=d1.botName;
+  document.getElementById(`sumo-ring${ring}-bot2-live`).textContent=d2.botName;
+  document.getElementById(`sumo-ring${ring}-status-live`).textContent='Ready — Round '+round;
+  alert('Match setup for Ring '+ring);
+}
+
+async function sumoSaveResult(ring) {
+  const b1v=document.getElementById(`sumo-ring${ring}-bot1`).value;
+  const b2v=document.getElementById(`sumo-ring${ring}-bot2`).value;
+  if(!b1v||!b2v){alert('Select both bots');return;}
+  const winner=document.getElementById(`sumo-ring${ring}-winner`).value;
+  if(!winner){alert('Select winner');return;}
+  const b1=JSON.parse(b1v),b2=JSON.parse(b2v);
+  const round=parseInt(document.getElementById(`sumo-ring${ring}-round`).value);
+  const duration=parseFloat(document.getElementById(`sumo-ring${ring}-duration`).value)||0;
+  const method=document.getElementById(`sumo-ring${ring}-method`).value;
+  const notes=document.getElementById(`sumo-ring${ring}-notes`).value.trim();
+  const group=document.getElementById(`sumo-ring${ring}-group`).value;
+  const counterDoc=await sudb.collection('sumoSettings').doc('matchCounter').get();
+  const cn=counterDoc.exists?counterDoc.data().count:1;
+  await suMatchesCol.add({matchNumber:cn,bot1Name:b1.botName,bot1Team:b1.teamName,bot2Name:b2.botName,bot2Team:b2.teamName,winner,winMethod:method,duration,round,notes,group,ring,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await sudb.collection('sumoSettings').doc('matchCounter').set({count:cn+1});
+  await suUpdateRankings(b1.botName,b1.teamName,b2.botName,b2.teamName,winner,group);
+  await suMatchDocs[ring].delete();
+  document.getElementById(`sumo-ring${ring}-status-live`).textContent='Match complete';
+  // Refresh grand final banner
+  suUpdateGrandFinalBanner();
+  alert('Result saved!');
+}
+
+async function suUpdateRankings(b1n,b1t,b2n,b2t,winner,group) {
+  for(const [name,team,won] of [[b1n,b1t,winner==='bot1'],[b2n,b2t,winner==='bot2']]){
+    const ex=await suRankingsCol.where('botName','==',name).get();
+    if(ex.empty){
+      await suRankingsCol.add({botName:name,teamName:team,wins:won?1:0,losses:won?0:1,totalMatches:1,winRate:won?'100.0':'0.0',group:group||'',status:'active',lastUpdated:firebase.firestore.FieldValue.serverTimestamp()});
+    } else {
+      const cd=ex.docs[0].data();
+      const wins=cd.wins+(won?1:0),losses=cd.losses+(won?0:1),total=cd.totalMatches+1;
+      await ex.docs[0].ref.update({wins,losses,totalMatches:total,winRate:(wins/total*100).toFixed(1),group:group||cd.group||'',lastUpdated:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+  }
+}
+
+async function sumoClearMatch(ring) {
+  if(!confirm('Clear Ring '+ring+'?')) return;
+  await suMatchDocs[ring].delete();
+}
+
+async function sumoAddBot() {
+  const name=document.getElementById('sumo-new-bot').value.trim();
+  const team=document.getElementById('sumo-bot-team').value.trim();
+  const weight=parseFloat(document.getElementById('sumo-bot-weight').value);
+  if(!name||!team||!weight) return alert('Fill all fields');
+  const snap=await suBotsCol.where('botName','==',name).get();
+  if(!snap.empty) return alert('Bot already registered');
+  await suBotsCol.add({botName:name,teamName:team,weight,group:'',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  ['sumo-new-bot','sumo-bot-team','sumo-bot-weight'].forEach(id=>document.getElementById(id).value='');
+  suLoadBots();
+}
+
+async function suAssignGroup(docId, group) {
+  await suBotsCol.doc(docId).update({group});
+  suLoadBots();
+}
+
+async function suLoadBots() {
+  const snap=await suBotsCol.orderBy('createdAt','desc').get();
+
+  // Reset match selects (both rings) — will be populated per-group below
+  [1,2].forEach(ring=>['bot1','bot2'].forEach(pos=>{
+    const sel=document.getElementById(`sumo-ring${ring}-${pos}`);
+    sel.innerHTML=`<option value="">Select ${pos==='bot1'?'Bot 1':'Bot 2'}</option>`;
+  }));
+
+  // Build lists for pool, group A, group B
+  const poolUl=document.getElementById('sumo-pool-list');
+  const grpAUl=document.getElementById('sumo-groupA-list');
+  const grpBUl=document.getElementById('sumo-groupB-list');
+  poolUl.innerHTML=''; grpAUl.innerHTML=''; grpBUl.innerHTML='';
+
+  const total=snap.size;
+  const countEl=document.getElementById('sumo-bot-count');
+  if(countEl) countEl.textContent=`(${total} bot${total!==1?'s':''})`;
+
+  // Track group winners for Grand Final banner
+  let finalistA='TBD', finalistB='TBD';
+
+  snap.forEach(doc=>{
+    const d=doc.data();
+    const val=JSON.stringify({botName:d.botName,teamName:d.teamName});
+    const g=d.group||'';
+
+    // Populate selects — Ring 1 only shows Group A bots, Ring 2 only shows Group B bots
+    // Unassigned bots (no group) appear in both rings as a fallback
+    const label=`${d.botName} (${d.teamName}) ${d.weight}kg`;
+    if(g==='A' || g==='') {
+      ['bot1','bot2'].forEach(pos=>{
+        document.getElementById(`sumo-ring1-${pos}`).appendChild(new Option(label,val));
+      });
+    }
+    if(g==='B' || g==='') {
+      ['bot1','bot2'].forEach(pos=>{
+        document.getElementById(`sumo-ring2-${pos}`).appendChild(new Option(label,val));
+      });
+    }
+
+    // Build list item
+    const li=document.createElement('li');
+    const nameSpan=`<span class="bot-info-text" style="font-size:0.82rem"><strong>${d.botName}</strong> <span style="color:var(--muted)">(${d.teamName}) ${d.weight}kg</span></span>`;
+    const acts=document.createElement('div'); acts.className='btn-actions'; acts.style.gap='4px';
+
+    if(g==='A'||g==='B') {
+      // Already in a group — show remove button
+      const unBtn=document.createElement('button');
+      unBtn.className='btn btn-outline btn-xs'; unBtn.textContent='↩ Unassign';
+      unBtn.onclick=()=>suAssignGroup(doc.id,'');
+      acts.appendChild(unBtn);
+    } else {
+      // In pool — show assign buttons
+      const aBtn=document.createElement('button');
+      aBtn.className='btn btn-primary btn-xs'; aBtn.textContent='→ Group A';
+      aBtn.onclick=()=>suAssignGroup(doc.id,'A');
+      const bBtn=document.createElement('button');
+      bBtn.className='btn btn-xs'; bBtn.style.cssText='background:linear-gradient(135deg,#f093fb,var(--pink));color:white;'; bBtn.textContent='→ Group B';
+      bBtn.onclick=()=>suAssignGroup(doc.id,'B');
+      acts.appendChild(aBtn); acts.appendChild(bBtn);
+    }
+
+    // Delete button always visible
+    const rbtn=document.createElement('button'); rbtn.className='btn btn-danger btn-xs'; rbtn.textContent='✕';
+    rbtn.onclick=async()=>{ if(confirm(`Remove "${d.botName}"?`)){ await suBotsCol.doc(doc.id).delete(); suLoadBots(); } };
+    acts.appendChild(rbtn);
+
+    li.innerHTML=nameSpan; li.appendChild(acts);
+
+    if(g==='A') grpAUl.appendChild(li);
+    else if(g==='B') grpBUl.appendChild(li);
+    else poolUl.appendChild(li);
+  });
+
+  // Empty states
+  if(!poolUl.children.length) poolUl.innerHTML='<li style="color:var(--muted);font-size:0.82rem;padding:10px 12px;justify-content:center">All bots assigned</li>';
+  if(!grpAUl.children.length) grpAUl.innerHTML='<li style="color:var(--muted);font-size:0.82rem;padding:10px 12px;justify-content:center">No bots yet</li>';
+  if(!grpBUl.children.length) grpBUl.innerHTML='<li style="color:var(--muted);font-size:0.82rem;padding:10px 12px;justify-content:center">No bots yet</li>';
+
+  // Update Grand Final banner from rankings
+  suUpdateGrandFinalBanner();
+}
+
+async function suUpdateGrandFinalBanner() {
+  // Pull rankings and find top of each group
+  const snap=await suRankingsCol.get();
+  let topA=null, topB=null;
+  snap.forEach(doc=>{
+    const d=doc.data();
+    const g=d.group||'';
+    if(g==='A'){
+      if(!topA||d.wins>topA.wins||(d.wins===topA.wins&&parseFloat(d.winRate)>parseFloat(topA.winRate))) topA=d;
+    } else if(g==='B'){
+      if(!topB||d.wins>topB.wins||(d.wins===topB.wins&&parseFloat(d.winRate)>parseFloat(topB.winRate))) topB=d;
+    }
+  });
+  const elA=document.getElementById('sumo-finalist-a');
+  const elB=document.getElementById('sumo-finalist-b');
+  if(elA) elA.textContent=topA?`${topA.botName}`:'TBD';
+  if(elB) elB.textContent=topB?`${topB.botName}`:'TBD';
+}
+
+function suListenRankings() {
+  suRankingsCol.onSnapshot(snap=>{
+    const tbody=document.getElementById('sumo-rankings-body');
+    tbody.innerHTML='';
+    const docs=snap.docs.sort((a,b)=>{
+      const da=a.data(),db=b.data();
+      return da.wins!==db.wins?db.wins-da.wins:parseFloat(db.winRate)-parseFloat(da.winRate);
+    });
+    docs.forEach((doc,i)=>{
+      const d=doc.data();
+      const groupLabel=d.group==='A'?'<span style="background:rgba(102,126,234,0.12);color:var(--purple);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">Group A</span>':d.group==='B'?'<span style="background:rgba(255,45,117,0.1);color:var(--pink);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">Group B</span>':d.group==='Final'?'<span style="background:rgba(214,158,46,0.15);color:var(--warn);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">🏆 Final</span>':'—';
+      const tr=document.createElement('tr');
+      if(i===0)tr.classList.add('position-1');else if(i===1)tr.classList.add('position-2');else if(i===2)tr.classList.add('position-3');
+      tr.innerHTML=`<td>${i+1}</td><td>${d.botName}</td><td>${d.teamName}</td><td>${groupLabel}</td><td>${d.wins}</td><td>${d.losses}</td><td>${d.winRate}%</td><td><button class="btn btn-danger btn-sm" onclick="suRemoveRanking('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+    // Refresh Grand Final banner whenever rankings change
+    suUpdateGrandFinalBanner();
+  });
+}
+async function suRemoveRanking(id){ if(confirm('Remove ranking?')) await suRankingsCol.doc(id).delete(); }
+
+function suListenMatches() {
+  suMatchesCol.orderBy('timestamp','desc').onSnapshot(snap=>{
+    const tbody=document.getElementById('sumo-matches-body');
+    tbody.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const wn=d.winner==='bot1'?d.bot1Name:d.winner==='bot2'?d.bot2Name:d.winner.toUpperCase();
+      const groupLabel=d.group==='A'?'<span style="background:rgba(102,126,234,0.12);color:var(--purple);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">Group A</span>':d.group==='B'?'<span style="background:rgba(255,45,117,0.1);color:var(--pink);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">Group B</span>':d.group==='Final'?'<span style="background:rgba(214,158,46,0.15);color:var(--warn);padding:2px 8px;border-radius:10px;font-size:0.72rem;font-weight:700">🏆 Final</span>':'—';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>#${d.matchNumber}</td><td>${d.bot1Name}</td><td>${d.bot2Name}</td><td><b>${wn}</b></td><td>${(d.winMethod||'').replace('-',' ')}</td><td>${groupLabel}</td><td><button class="btn btn-danger btn-sm" onclick="suRemoveMatch('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+async function suRemoveMatch(id){ if(confirm('Remove match?')) await suMatchesCol.doc(id).delete(); }
+
+// ============================================================
+// =====================  RACING BOTS  ========================
+// ============================================================
+const rdb=fbDbs['racing'];
+const rTimerDocs=[null,
+  rdb.collection('settings').doc('raceTimer1'),
+  rdb.collection('settings').doc('raceTimer2'),
+  rdb.collection('settings').doc('raceTimer3')
+];
+const rRaceDocs=[null,
+  rdb.collection('settings').doc('currentRace1'),
+  rdb.collection('settings').doc('currentRace2'),
+  rdb.collection('settings').doc('currentRace3')
+];
+
+// ── Firestore doc init ──
+// Always force-writes all 6 docs (3 timer + 3 race) to a known-clean state
+// on startup, UNLESS a timer is actively running (live race in progress).
+// This guarantees raceTimer3/currentRace3 are created if missing, and nukes
+// any stale startTime/finalTime that caused the 1700-second "ghost" display.
+async function rInitFirestoreDocs() {
+  console.log("Racing Auth State:", fbAuths['racing'].currentUser);
+  const timerClean = { running: false, startTime: null, finalTime: null, sessionKey: null };
+  const raceClean  = { botName: null, teamName: null, status: 'idle' };
+  try {
+    // Process all 3 lanes in parallel for speed
+    await Promise.all([1, 2, 3].map(async lane => {
+      // ── Timer doc ──
+      const timerSnap = await rTimerDocs[lane].get();
+      if (!timerSnap.exists) {
+        await rTimerDocs[lane].set(timerClean);
+        console.log('[Racing] ✅ Created raceTimer' + lane);
+      } else if (timerSnap.data().running === true) {
+        // Live race in progress — do not disturb
+        console.log('[Racing] ⏱ raceTimer' + lane + ' is actively running — skipped');
+      } else {
+        // Exists but not running: force-overwrite to wipe stale startTime / finalTime
+        await rTimerDocs[lane].set(timerClean);
+        console.log('[Racing] ♻️ Reset raceTimer' + lane);
+      }
+      // ── Race doc ──
+      const raceSnap = await rRaceDocs[lane].get();
+      if (!raceSnap.exists) {
+        await rRaceDocs[lane].set(raceClean);
+        console.log('[Racing] ✅ Created currentRace' + lane);
+      }
+      // existing race docs are left as-is (they hold bot name/team for the UI)
+    }));
+    console.log('[Racing] ✅ All Firestore docs initialised');
+  } catch(err) {
+    console.error('[Racing] ❌ rInitFirestoreDocs FAILED:', err);
+
+  }
+}
+
+const rFinalCol = rdb.collection('finalResults');
+const rBotsCol  = rdb.collection('bots');
+
+// rTimerData[lane] always holds the latest snapshot data from Firestore.
+// rTimerIntervals[lane] holds the active setInterval handle.
+// rActiveSessionKey[lane] tracks which sessionKey the running interval was started for,
+// so that server-echo snapshots (same sessionKey, running:true) don't restart the interval.
+let rTimerData       = [null, null, null, null];
+let rTimerIntervals  = [null, null, null, null];
+let rActiveSessionKey= [null, null, null, null];
+
+function rClearInterval(lane) {
+  if (rTimerIntervals[lane]) { clearInterval(rTimerIntervals[lane]); rTimerIntervals[lane] = null; }
+}
+
+function rListenTimer(lane) {
+  rTimerDocs[lane].onSnapshot(doc => {
+    // Always update our local cache with the freshest Firestore data
+    rTimerData[lane] = doc.exists ? doc.data() : null;
+    const el = document.getElementById('race-timer-' + lane);
+    if (!el) return;
+    const d = rTimerData[lane];
+
+    if (d?.running === true && d?.startTime) {
+      const incomingKey = d.sessionKey || null;
+
+      // Only (re)start the interval for a genuinely new session key.
+      // Server-confirmation echoes carry the same key — ignore them so the
+      // interval doesn't get restarted and jump to a wrong elapsed time.
+      if (rActiveSessionKey[lane] !== incomingKey) {
+        rClearInterval(lane);
+        rActiveSessionKey[lane] = incomingKey;
+
+        // Capture startTime from THIS snapshot — never use rTimerData[lane].startTime
+        // later because the cache could be overwritten by a subsequent snapshot.
+        const startMs = d.startTime.toMillis();
+        el.classList.add('running');
+
+        rTimerIntervals[lane] = setInterval(() => {
+          const dispEl = document.getElementById('race-timer-' + lane);
+          if (dispEl) dispEl.textContent = fmtTime(Date.now() - startMs);
+        }, 10);
+      }
+      // Interval already ticking for this session — do nothing further
+
+    } else {
+      // Stopped, reset, or doc doesn't exist — kill the interval
+      rClearInterval(lane);
+      rActiveSessionKey[lane] = null;
+      el.classList.remove('running');
+      // Show finalTime only when there's a valid sessionKey (real stop).
+      // If sessionKey is null the doc was reset/initialised — show 00:00.000.
+      const showFinal = d?.finalTime != null && d?.sessionKey != null;
+      el.textContent = showFinal ? fmtTime(d.finalTime) : '00:00.000';
+    }
+  });
+}
+
+async function raceStartTimer(lane) {
+  // Generate a unique session key so the listener can detect a genuine new start
+  const sessionKey = Date.now().toString(36) + Math.random().toString(36).slice(2) + '-' + lane;
+  // Always write a brand-new Timestamp.now() — never reuse any previous startTime
+  await rTimerDocs[lane].set({
+    running: true,
+    startTime: firebase.firestore.Timestamp.now(),
+    finalTime: null,
+    sessionKey
+  });
+}
+
+async function raceStopTimer(lane) {
+  const d = rTimerData[lane];
+  if (!d?.running) return;
+  // Calculate elapsed from the startTime stored in the snapshot we already have
+  const ft = Date.now() - d.startTime.toMillis();
+  await rTimerDocs[lane].set({
+    running: false,
+    startTime: d.startTime,   // keep for reference
+    finalTime: ft,
+    sessionKey: d.sessionKey || null
+  });
+  document.getElementById(`race-bot${lane}-time`).value = (ft / 1000).toFixed(3);
+}
+
+async function raceResetTimer(lane) {
+  if (!confirm('Reset Lane ' + lane + '?')) return;
+  await rTimerDocs[lane].set({ running: false, startTime: null, finalTime: null, sessionKey: null });
+}
+
+async function raceStartAll() {
+  const active = [1, 2, 3].filter(l => !!document.getElementById(`race-bot${l}-name`).value.trim());
+  if (!active.length) { alert('Enter at least one bot name'); return; }
+  // Capture a single "now" so all lanes start from the identical millisecond
+  const now = firebase.firestore.Timestamp.now();
+  await Promise.all(active.map(l => {
+    const sessionKey = Date.now().toString(36) + Math.random().toString(36).slice(2) + '-' + l;
+    return rTimerDocs[l].set({ running: true, startTime: now, finalTime: null, sessionKey });
+  }));
+}
+
+async function raceFinishBot(lane){
+  const name=document.getElementById(`race-bot${lane}-name`).value.trim();
+  if(!name){alert('Enter bot name for Lane '+lane);return;}
+  if(!confirm(`Finish race for Lane ${lane}?`)) return;
+  const team=document.getElementById(`race-bot${lane}-team`).value.trim();
+  const time=parseFloat(document.getElementById(`race-bot${lane}-time`).value);
+  const status=document.getElementById(`race-bot${lane}-status`).value;
+  if(status==='completed'&&(isNaN(time)||time<=0)){alert('Enter valid time');return;}
+  await rFinalCol.add({botName:name,teamName:team,raceTime:status==='completed'?time:null,status,lane,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById(`race-bot${lane}-info`).textContent=`✅ ${name} finished`;
+  alert(`Lane ${lane} result saved!`);
+}
+
+async function raceSaveAll(){
+  const results=[];
+  for(let lane=1;lane<=3;lane++){
+    const name=document.getElementById(`race-bot${lane}-name`).value.trim();
+    if(!name) continue;
+    const team=document.getElementById(`race-bot${lane}-team`).value.trim();
+    const time=parseFloat(document.getElementById(`race-bot${lane}-time`).value);
+    const status=document.getElementById(`race-bot${lane}-status`).value;
+    results.push({botName:name,teamName:team,raceTime:status==='completed'?time:null,status,lane});
+  }
+  if(!results.length){alert('No valid data');return;}
+  for(const r of results) await rFinalCol.add({...r,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  alert(`${results.length} result(s) saved!`);
+}
+
+async function raceClearAll(){
+  if(!confirm('Clear all 3 lanes?')) return;
+  for(let l=1;l<=3;l++){
+    ['name','team','time'].forEach(f=>document.getElementById(`race-bot${l}-${f}`).value='');
+    document.getElementById(`race-bot${l}-status`).value='completed';
+    document.getElementById(`race-bot${l}-info`).textContent=l===3?'Not used':'Waiting...';
+    await rTimerDocs[l].set({startTime:null,running:false,finalTime:null,sessionKey:null});
+    await rRaceDocs[l].delete().catch(()=>{});
+  }
+}
+
+async function raceAddBot(){
+  const name=document.getElementById('race-new-bot').value.trim();
+  const team=document.getElementById('race-bot-team').value.trim();
+  if(!name||!team) return alert('Enter name and team');
+  const snap=await rBotsCol.where('botName','==',name).get();
+  if(!snap.empty) return alert('Bot already registered');
+  await rBotsCol.add({botName:name,teamName:team,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('race-new-bot').value='';
+  document.getElementById('race-bot-team').value='';
+  rLoadBots();
+}
+
+async function rLoadBots(){
+  const snap=await rBotsCol.get();
+  const ul=document.getElementById('race-bots-list');
+  ul.innerHTML='';
+  snap.forEach(doc=>{
+    const d=doc.data();
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="bot-info-text">${d.botName} (${d.teamName})</span>`;
+    const acts=document.createElement('div'); acts.className='btn-actions';
+    [1,2,3].forEach(lane=>{
+      const btn=document.createElement('button');
+      btn.className='btn btn-primary btn-xs'; btn.textContent=`→L${lane}`;
+      btn.onclick=()=>{
+        document.getElementById(`race-bot${lane}-name`).value=d.botName;
+        document.getElementById(`race-bot${lane}-team`).value=d.teamName;
+        document.getElementById(`race-bot${lane}-info`).textContent=d.botName;
+      };
+      acts.appendChild(btn);
+    });
+    const rbtn=document.createElement('button'); rbtn.className='btn btn-danger btn-xs'; rbtn.textContent='✕';
+    rbtn.onclick=async()=>{ if(confirm('Remove?')){ await rBotsCol.doc(doc.id).delete(); rLoadBots(); } };
+    acts.appendChild(rbtn); li.appendChild(acts); ul.appendChild(li);
+  });
+}
+
+function rListenFinalResults(){
+  rFinalCol.orderBy('timestamp','desc').onSnapshot(snap=>{
+    const tbody=document.getElementById('race-results-body');
+    tbody.innerHTML='';
+    const sorted=snap.docs.slice().sort((a,b)=>{
+      const da=a.data(),db=b.data();
+      if(da.status==='completed'&&db.status==='completed') return da.raceTime-db.raceTime;
+      if(da.status==='completed') return -1;
+      if(db.status==='completed') return 1;
+      return 0;
+    });
+    let pos=1;
+    sorted.forEach(doc=>{
+      const d=doc.data();
+      const pd=d.status==='completed'?pos++:'-';
+      const td=d.status==='completed'?d.raceTime?.toFixed(3)+'s':'-';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${pd}</td><td>${d.botName}</td><td>${d.teamName}</td><td>${td}</td><td>${d.status.toUpperCase()}</td><td><button class="btn btn-danger btn-sm" onclick="rRemoveFinal('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+async function rRemoveFinal(id){ if(confirm('Remove result?')) await rFinalCol.doc(id).delete(); }
+
+// ============================================================
+// =====================  BATTLEBOTS  =========================
+// ============================================================
+const bdb=fbDbs['battle'];
+const bTimerDoc=bdb.collection('battlebot-settings').doc('matchTimer');
+const bCurrentDoc=bdb.collection('battlebot-settings').doc('currentMatch');
+const bResultsCol=bdb.collection('battlebot-results');
+const bBotsCol=bdb.collection('battlebots');
+const BATTLE_DURATION=180;
+let bTimerData=null, bTimerInterval=null;
+const BATTLE_RESULT_LABELS={'bot1-ko':'KO','bot2-ko':'KO','judges':'Judges','draw':'Draw'};
+
+// ── Auto-create required Firestore documents if they don't exist ──
+async function bInitFirestoreDocs() {
+  console.log('[Battle] Auth State:', fbAuths['battle'].currentUser);
+  const timerDefaults  = { running: false, startTime: null, remainingTime: BATTLE_DURATION };
+  const matchDefaults  = { bot1: { name: null, team: null }, bot2: { name: null, team: null }, updatedAt: null };
+  try {
+    // matchTimer doc
+    const timerSnap = await bTimerDoc.get();
+    if (!timerSnap.exists) {
+      await bTimerDoc.set(timerDefaults);
+      console.log('[Battle] ✅ Created battlebot-settings/matchTimer');
+    } else if (timerSnap.data().running === true) {
+      console.log('[Battle] ⏱ matchTimer is actively running — skipped');
+    } else {
+      // Exists but not running — patch in any missing fields without overwriting
+      await bTimerDoc.set({ ...timerDefaults, ...timerSnap.data() }, { merge: true });
+      console.log('[Battle] ♻️ Patched battlebot-settings/matchTimer');
+    }
+    // currentMatch doc
+    const matchSnap = await bCurrentDoc.get();
+    if (!matchSnap.exists) {
+      await bCurrentDoc.set(matchDefaults);
+      console.log('[Battle] ✅ Created battlebot-settings/currentMatch');
+    } else {
+      console.log('[Battle] currentMatch already exists');
+    }
+    // Ensure the battlebots collection exists by checking it (no-op if already has docs)
+    console.log('[Battle] ✅ Firestore doc init complete');
+  } catch(err) {
+    console.error('[Battle] ❌ bInitFirestoreDocs FAILED:', err);
+    alert('BattleBots Firebase init error: ' + err.message + '\n\nCheck the browser console for details.');
+  }
+}
+
+function bListenTimer(){
+  bTimerDoc.onSnapshot(doc=>{
+    bTimerData=doc.exists?doc.data():null;
+    const el=document.getElementById('battle-timer');
+    if(!el) return;
+    if(bTimerData?.running){
+      el.classList.add('running');
+      if(bTimerInterval) clearInterval(bTimerInterval);
+      bTimerInterval=setInterval(()=>{
+        const elapsed=(Date.now()-bTimerData.startTime.toMillis())/1000;
+        const rem=Math.max(0,BATTLE_DURATION-elapsed);
+        const e2=document.getElementById('battle-timer');
+        e2.textContent=fmtCountdown(rem);
+        e2.classList.toggle('urgent',rem<=30&&rem>0);
+        if(rem<=0) clearInterval(bTimerInterval);
+      },500);
+    } else {
+      if(bTimerInterval) clearInterval(bTimerInterval);
+      el.classList.remove('running');
+      el.textContent=bTimerData?.remainingTime!=null?fmtCountdown(bTimerData.remainingTime):fmtCountdown(BATTLE_DURATION);
+    }
+  });
+}
+
+async function battleStartTimer(){ await bTimerDoc.set({startTime:firebase.firestore.Timestamp.now(),running:true,remainingTime:BATTLE_DURATION}); }
+async function battlePauseTimer(){
+  if(!bTimerData?.running) return;
+  const rem=BATTLE_DURATION-(Date.now()-bTimerData.startTime.toMillis())/1000;
+  await bTimerDoc.set({startTime:null,running:false,remainingTime:Math.max(0,rem)});
+}
+async function battleResetTimer(){
+  if(!confirm('Reset timer?')) return;
+  await bTimerDoc.set({startTime:null,running:false,remainingTime:BATTLE_DURATION});
+}
+
+function battleUpdateTotals(){
+  ['b1','b2'].forEach(p=>{
+    const total=['damage','aggression','control','strategy'].reduce((s,f)=>s+(parseInt(document.getElementById(`${p}-${f}`).value)||0),0);
+    document.getElementById(`${p}-total`).textContent=total;
+  });
+}
+
+async function battleUpdateLive(){
+  const b1n=document.getElementById('battle-bot1-name').value.trim();
+  const b2n=document.getElementById('battle-bot2-name').value.trim();
+  if(!b1n||!b2n){alert('Enter both bot names');return;}
+  await bCurrentDoc.set({bot1:{name:b1n,team:document.getElementById('battle-bot1-team').value.trim()},bot2:{name:b2n,team:document.getElementById('battle-bot2-team').value.trim()},updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  alert('Live match updated!');
+}
+
+async function battleSaveResult(){
+  const b1n=document.getElementById('battle-bot1-name').value.trim();
+  const b2n=document.getElementById('battle-bot2-name').value.trim();
+  const result=document.getElementById('battle-match-result').value;
+  if(!b1n||!b2n){alert('Enter both bots');return;}
+  if(!result){alert('Select result');return;}
+  const getS=p=>({damage:parseInt(document.getElementById(`${p}-damage`).value)||0,aggression:parseInt(document.getElementById(`${p}-aggression`).value)||0,control:parseInt(document.getElementById(`${p}-control`).value)||0,strategy:parseInt(document.getElementById(`${p}-strategy`).value)||0});
+  const s1=getS('b1'); s1.total=Object.values(s1).reduce((a,b)=>a+b,0);
+  const s2=getS('b2'); s2.total=Object.values(s2).reduce((a,b)=>a+b,0);
+  let winner=result==='bot1-ko'?b1n:result==='bot2-ko'?b2n:result==='draw'?'Draw':s1.total>s2.total?b1n:s2.total>s1.total?b2n:'Draw';
+  await bResultsCol.add({bot1:{name:b1n,team:document.getElementById('battle-bot1-team').value.trim(),scores:s1},bot2:{name:b2n,team:document.getElementById('battle-bot2-team').value.trim(),scores:s2},winner,resultType:result,judgeNotes:document.getElementById('battle-notes').value.trim(),timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  alert('Match result saved!');
+}
+
+async function battleClearMatch(){
+  if(!confirm('Clear match?')) return;
+  ['battle-bot1-name','battle-bot1-team','battle-bot2-name','battle-bot2-team','battle-notes'].forEach(id=>document.getElementById(id).value='');
+  ['b1','b2'].forEach(p=>['damage','aggression','control','strategy'].forEach(f=>document.getElementById(`${p}-${f}`).value=0));
+  battleUpdateTotals();
+  await bCurrentDoc.delete();
+}
+
+async function battleAddBot(){
+  const name=document.getElementById('battle-new-bot').value.trim();
+  const team=document.getElementById('battle-bot-team').value.trim();
+  if(!name||!team) return alert('Enter name and team');
+  const snap=await bBotsCol.where('botName','==',name).get();
+  if(!snap.empty) return alert('Bot already registered');
+  await bBotsCol.add({botName:name,teamName:team,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('battle-new-bot').value='';
+  document.getElementById('battle-bot-team').value='';
+  bLoadBots();
+}
+
+async function bLoadBots(){
+  const snap=await bBotsCol.get();
+  const ul=document.getElementById('battle-bots-list');
+  ul.innerHTML='';
+  snap.forEach(doc=>{
+    const d=doc.data();
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="bot-info-text">${d.botName} (${d.teamName})</span>`;
+    const acts=document.createElement('div'); acts.className='btn-actions';
+    [1,2].forEach(n=>{
+      const btn=document.createElement('button');
+      btn.className='btn btn-primary btn-xs'; btn.textContent=`→Bot${n}`;
+      btn.onclick=()=>{
+        document.getElementById(`battle-bot${n}-name`).value=d.botName;
+        document.getElementById(`battle-bot${n}-team`).value=d.teamName;
+      };
+      acts.appendChild(btn);
+    });
+    const rbtn=document.createElement('button'); rbtn.className='btn btn-danger btn-xs'; rbtn.textContent='✕';
+    rbtn.onclick=async()=>{ if(confirm('Remove?')){ await bBotsCol.doc(doc.id).delete(); bLoadBots(); } };
+    acts.appendChild(rbtn); li.appendChild(acts); ul.appendChild(li);
+  });
+}
+
+function bListenResults(){
+  bResultsCol.orderBy('timestamp','desc').onSnapshot(snap=>{
+    const tbody=document.getElementById('battle-results-body');
+    tbody.innerHTML='';
+    let n=snap.size;
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const tl=BATTLE_RESULT_LABELS[d.resultType]||d.resultType;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${n--}</td><td>${d.bot1.name}<br><small>${d.bot1.team}</small></td><td>${d.bot1.scores.total}</td><td>${d.bot2.name}<br><small>${d.bot2.team}</small></td><td>${d.bot2.scores.total}</td><td><b>${d.winner}</b></td><td>${tl}</td><td><button class="btn btn-danger btn-sm" onclick="bRemoveResult('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+    bUpdateLeaderboard(snap.docs);
+  });
+}
+
+function bUpdateLeaderboard(docs){
+  const stats={};
+  docs.forEach(doc=>{
+    const d=doc.data();
+    [d.bot1,d.bot2].forEach(b=>{if(!stats[b.name])stats[b.name]={name:b.name,team:b.team,wins:0,losses:0,draws:0,totalPoints:0};});
+    if(d.winner===d.bot1.name){stats[d.bot1.name].wins++;stats[d.bot2.name].losses++;}
+    else if(d.winner===d.bot2.name){stats[d.bot2.name].wins++;stats[d.bot1.name].losses++;}
+    else{stats[d.bot1.name].draws++;stats[d.bot2.name].draws++;}
+    stats[d.bot1.name].totalPoints+=d.bot1.scores.total;
+    stats[d.bot2.name].totalPoints+=d.bot2.scores.total;
+  });
+  const sorted=Object.values(stats).sort((a,b)=>b.wins!==a.wins?b.wins-a.wins:b.totalPoints-a.totalPoints);
+  const tbody=document.getElementById('battle-leaderboard-body');
+  tbody.innerHTML='';
+  sorted.forEach((b,i)=>{
+    const tr=document.createElement('tr');
+    if(i===0)tr.classList.add('position-1');else if(i===1)tr.classList.add('position-2');else if(i===2)tr.classList.add('position-3');
+    tr.innerHTML=`<td>${i+1}</td><td>${b.name}</td><td>${b.team}</td><td>${b.wins}</td><td>${b.losses}</td><td>${b.draws}</td><td>${b.totalPoints}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+async function bRemoveResult(id){ if(confirm('Remove?')) await bResultsCol.doc(id).delete(); }
+
+// ============================================================
+// =====================  MAZE BOTS  ==========================
+// ============================================================
+const mdb=fbDbs['maze'];
+const mTimerDoc=mdb.collection('mazeSettings').doc('runTimer');
+const mRunDoc=mdb.collection('mazeSettings').doc('currentRun');
+const mAttemptsCol=mdb.collection('mazeAttempts');
+const mFinalCol=mdb.collection('mazeFinalResults');
+const mBotsCol=mdb.collection('mazeBots');
+let mTimerData=null,mTimerInterval=null;
+
+// ── Auto-create required Firestore documents if they don't exist ──
+async function mInitFirestoreDocs() {
+  console.log('[Maze] Auth State:', fbAuths['maze'].currentUser);
+  const timerDefaults = { running: false, startTime: null, finalTime: null };
+  const runDefaults   = { botName: null, teamName: null, attemptNumber: null, runTime: null, status: 'idle', updatedAt: null };
+  try {
+    // mazeSettings/runTimer
+    const timerSnap = await mTimerDoc.get();
+    if (!timerSnap.exists) {
+      await mTimerDoc.set(timerDefaults);
+      console.log('[Maze] ✅ Created mazeSettings/runTimer');
+    } else if (timerSnap.data().running === true) {
+      console.log('[Maze] ⏱ runTimer is actively running — skipped');
+    } else {
+      await mTimerDoc.set({ ...timerDefaults, ...timerSnap.data() }, { merge: true });
+      console.log('[Maze] ♻️ Patched mazeSettings/runTimer');
+    }
+    // mazeSettings/currentRun
+    const runSnap = await mRunDoc.get();
+    if (!runSnap.exists) {
+      await mRunDoc.set(runDefaults);
+      console.log('[Maze] ✅ Created mazeSettings/currentRun');
+    } else {
+      console.log('[Maze] currentRun already exists');
+    }
+    console.log('[Maze] ✅ All Firestore docs initialised');
+  } catch(err) {
+    console.error('[Maze] ❌ mInitFirestoreDocs FAILED:', err);
+    alert('Maze Firebase init error: ' + err.message + '\n\nCheck the browser console for details.');
+  }
+}
+
+function mListenTimer(){
+  mTimerDoc.onSnapshot(doc=>{
+    mTimerData=doc.exists?doc.data():null;
+    const el=document.getElementById('maze-timer');
+    if(!el) return;
+    if(mTimerData?.running){
+      el.classList.add('running');
+      if(mTimerInterval) clearInterval(mTimerInterval);
+      mTimerInterval=setInterval(()=>{
+        const elapsed=Date.now()-mTimerData.startTime.toMillis();
+        document.getElementById('maze-timer').textContent=fmtTime(elapsed);
+      },10);
+    } else {
+      if(mTimerInterval) clearInterval(mTimerInterval);
+      el.classList.remove('running');
+      el.textContent=mTimerData?.finalTime?fmtTime(mTimerData.finalTime):'00:00.000';
+    }
+  });
+}
+
+async function mazeStartTimer(){ await mTimerDoc.set({startTime:firebase.firestore.Timestamp.now(),running:true,finalTime:null}); }
+async function mazeStopTimer(){
+  if(!mTimerData?.running) return;
+  const ft=Date.now()-mTimerData.startTime.toMillis();
+  await mTimerDoc.set({...mTimerData,running:false,finalTime:ft});
+  document.getElementById('maze-run-time').value=(ft/1000).toFixed(3);
+}
+async function mazeResetTimer(){
+  if(!confirm('Reset timer?')) return;
+  await mTimerDoc.set({startTime:null,running:false,finalTime:null});
+}
+
+async function mazeSaveRun(){
+  const bot=document.getElementById('maze-bot-name').value.trim();
+  const team=document.getElementById('maze-team-name').value.trim();
+  const attempt=parseInt(document.getElementById('maze-attempt-num').value);
+  const time=parseFloat(document.getElementById('maze-run-time').value);
+  const status=document.getElementById('maze-run-status').value;
+  if(!bot||!team){alert('Enter bot and team');return;}
+  if(status==='completed'&&(isNaN(time)||time<=0)){alert('Enter valid time');return;}
+  const ex=await mAttemptsCol.where('botName','==',bot).where('attemptNumber','==',attempt).get();
+  if(!ex.empty){if(!confirm('Overwrite existing attempt?'))return;ex.docs[0].ref.delete();}
+  await mAttemptsCol.add({botName:bot,teamName:team,attemptNumber:attempt,runTime:status==='completed'?time:null,status,timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await mRunDoc.set({botName:bot,teamName:team,attemptNumber:attempt,runTime:status==='completed'?time:null,status,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await mUpdateFinal(bot,team);
+  alert('Run saved!');
+}
+
+async function mUpdateFinal(botName,teamName){
+  const snap=await mAttemptsCol.where('botName','==',botName).get();
+  const attempts=snap.docs.map(d=>d.data());
+  const completed=attempts.filter(a=>a.status==='completed');
+  const bestTime=completed.length?Math.min(...completed.map(a=>a.runTime)):null;
+  const successRate=attempts.length?(completed.length/attempts.length*100).toFixed(1):0;
+  const ex=await mFinalCol.where('botName','==',botName).get();
+  const data={botName,teamName,bestTime,totalAttempts:attempts.length,successfulAttempts:completed.length,successRate:parseFloat(successRate),lastUpdated:firebase.firestore.FieldValue.serverTimestamp()};
+  if(ex.empty) await mFinalCol.add(data); else await ex.docs[0].ref.update(data);
+}
+
+async function mazeFinishBot(){
+  const bot=document.getElementById('maze-bot-name').value.trim();
+  const team=document.getElementById('maze-team-name').value.trim();
+  if(!bot){alert('Enter bot name');return;}
+  if(!confirm('Finish all attempts for '+bot+'?')) return;
+  await mUpdateFinal(bot,team);
+  await mRunDoc.delete();
+  document.getElementById('maze-current-run-display').textContent='Run complete: '+bot;
+  alert('All runs completed for '+bot);
+}
+
+async function mazeClearRun(){
+  if(!confirm('Clear run?')) return;
+  await mRunDoc.delete();
+  ['maze-bot-name','maze-team-name','maze-run-time'].forEach(id=>document.getElementById(id).value='');
+}
+
+async function mazeAddBot(){
+  const name=document.getElementById('maze-new-bot').value.trim();
+  const team=document.getElementById('maze-bot-team').value.trim();
+  if(!name||!team) return alert('Enter name and team');
+  const snap=await mBotsCol.where('botName','==',name).get();
+  if(!snap.empty) return alert('Bot already registered');
+  await mBotsCol.add({botName:name,teamName:team,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('maze-new-bot').value='';
+  document.getElementById('maze-bot-team').value='';
+  mLoadBots();
+}
+
+async function mLoadBots(){
+  const snap=await mBotsCol.orderBy('createdAt','desc').get();
+  const ul=document.getElementById('maze-bots-list');
+  ul.innerHTML='';
+  snap.forEach(doc=>{
+    const d=doc.data();
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="bot-info-text">${d.botName} (${d.teamName})</span>`;
+    const acts=document.createElement('div'); acts.className='btn-actions';
+    const lbtn=document.createElement('button'); lbtn.className='btn btn-primary btn-xs'; lbtn.textContent='Load';
+    lbtn.onclick=async()=>{
+      document.getElementById('maze-bot-name').value=d.botName;
+      document.getElementById('maze-team-name').value=d.teamName;
+      const asnap=await mAttemptsCol.where('botName','==',d.botName).get();
+      document.getElementById('maze-attempt-num').value=Math.min(asnap.size+1,3);
+    };
+    const rbtn=document.createElement('button'); rbtn.className='btn btn-danger btn-xs'; rbtn.textContent='✕';
+    rbtn.onclick=async()=>{
+      if(!confirm('Remove bot and all attempts?')) return;
+      const ats=await mAttemptsCol.where('botName','==',d.botName).get();
+      const frs=await mFinalCol.where('botName','==',d.botName).get();
+      const batch=mdb.batch();
+      ats.forEach(a=>batch.delete(a.ref));
+      frs.forEach(f=>batch.delete(f.ref));
+      batch.delete(mBotsCol.doc(doc.id));
+      await batch.commit();
+      mLoadBots();
+    };
+    acts.appendChild(lbtn); acts.appendChild(rbtn); li.appendChild(acts); ul.appendChild(li);
+  });
+}
+
+function mListenFinalResults(){
+  mFinalCol.onSnapshot(snap=>{
+    const sorted=snap.docs.slice().sort((a,b)=>{
+      const da=a.data(),db=b.data();
+      if(da.bestTime!==null&&db.bestTime!==null) return da.bestTime-db.bestTime;
+      if(da.bestTime!==null) return -1;
+      if(db.bestTime!==null) return 1;
+      return db.successRate-da.successRate;
+    });
+    const tbody=document.getElementById('maze-results-body');
+    tbody.innerHTML='';
+    let pos=1;
+    sorted.forEach((doc,i)=>{
+      const d=doc.data();
+      const tr=document.createElement('tr');
+      if(i===0)tr.classList.add('position-1');else if(i===1)tr.classList.add('position-2');else if(i===2)tr.classList.add('position-3');
+      tr.innerHTML=`<td>${d.bestTime!==null?pos++:'-'}</td><td>${d.botName}</td><td>${d.teamName}</td><td>${d.bestTime!==null?d.bestTime.toFixed(3)+'s':'No completion'}</td><td>${d.totalAttempts}</td><td>${d.successRate}%</td><td><button class="btn btn-danger btn-sm" onclick="mRemoveFinal('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+function mListenAttempts(){
+  mAttemptsCol.orderBy('timestamp','desc').onSnapshot(snap=>{
+    const tbody=document.getElementById('maze-attempts-body');
+    tbody.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${d.botName}</td><td>${d.teamName}</td><td>${d.attemptNumber}</td><td>${d.status==='completed'?d.runTime.toFixed(3)+'s':'-'}</td><td>${d.status.toUpperCase()}</td><td>${d.timestamp?new Date(d.timestamp.toDate()).toLocaleTimeString():'-'}</td><td><button class="btn btn-danger btn-sm" onclick="mRemoveAttempt('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+
+async function mRemoveFinal(id){ if(confirm('Remove result?')) await mFinalCol.doc(id).delete(); }
+async function mRemoveAttempt(id){
+  if(!confirm('Remove attempt?')) return;
+  const doc=await mAttemptsCol.doc(id).get();
+  const {botName,teamName}=doc.data();
+  await mAttemptsCol.doc(id).delete();
+  await mUpdateFinal(botName,teamName);
+}
+
+// ============================================================
+// ==================  BALLOON COMBAT  ========================
+// Free-For-All — all bots compete simultaneously each round
+// ============================================================
+const bldb=fbDbs['balloon'];
+const blTimerDoc =bldb.collection('balloon-settings').doc('matchTimer');
+const blRoundDoc =bldb.collection('balloon-settings').doc('currentRound');
+const blResultsCol=bldb.collection('balloon-results');
+const blBotsCol  =bldb.collection('balloon-bots');
+const BALLOON_DURATION=180;
+let blTimerData=null, blTimerInterval=null;
+
+// bots currently in the live round: [{botName, teamName, popped, popTime}]
+let blRoundBots=[];
+// elimination order for this round
+let blElimOrder=[];
+
+// ── Auto-create required Firestore docs ──
+async function blInitFirestoreDocs(){
+  console.log('[Balloon] Auth:', fbAuths['balloon'].currentUser);
+  const timerDef={ running:false, startTime:null, remainingTime:BALLOON_DURATION };
+  const roundDef={ active:false, roundNumber:1, roundType:'qualifier', bots:[], startedAt:null };
+  try {
+    const tSnap=await blTimerDoc.get();
+    if(!tSnap.exists){
+      await blTimerDoc.set(timerDef);
+      console.log('[Balloon] ✅ Created balloon-settings/matchTimer');
+    } else if(tSnap.data().running===true){
+      console.log('[Balloon] ⏱ matchTimer running — skipped');
+    } else {
+      await blTimerDoc.set({...timerDef,...tSnap.data()},{merge:true});
+      console.log('[Balloon] ♻️ Patched balloon-settings/matchTimer');
+    }
+    const rSnap=await blRoundDoc.get();
+    if(!rSnap.exists){
+      await blRoundDoc.set(roundDef);
+      console.log('[Balloon] ✅ Created balloon-settings/currentRound');
+    } else {
+      console.log('[Balloon] currentRound already exists');
+    }
+    console.log('[Balloon] ✅ Firestore docs initialised');
+  } catch(err){
+    console.error('[Balloon] ❌ blInitFirestoreDocs FAILED:',err);
+    alert('Balloon Firebase init error: '+err.message+'\n\nCheck the browser console for details.');
+  }
+}
+
+// ── Timer listener ──
+function blListenTimer(){
+  blTimerDoc.onSnapshot(doc=>{
+    blTimerData=doc.exists?doc.data():null;
+    const el=document.getElementById('balloon-timer');
+    if(!el) return;
+    if(blTimerData?.running){
+      el.classList.add('running');
+      if(blTimerInterval) clearInterval(blTimerInterval);
+      blTimerInterval=setInterval(()=>{
+        const elapsed=(Date.now()-blTimerData.startTime.toMillis())/1000;
+        const rem=Math.max(0,BALLOON_DURATION-elapsed);
+        const e2=document.getElementById('balloon-timer');
+        e2.textContent=fmtCountdown(rem);
+        e2.classList.toggle('urgent',rem<=30&&rem>0);
+        if(rem<=0){clearInterval(blTimerInterval);document.getElementById('balloon-match-status').textContent='⏰ Time Expired!';}
+      },500);
+    } else {
+      if(blTimerInterval) clearInterval(blTimerInterval);
+      el.classList.remove('running');
+      el.textContent=blTimerData?.remainingTime!=null?fmtCountdown(blTimerData.remainingTime):fmtCountdown(BALLOON_DURATION);
+    }
+  });
+}
+
+// ── Round listener — keeps blRoundBots in sync and refreshes arena grid ──
+function blListenRound(){
+  blRoundDoc.onSnapshot(doc=>{
+    if(!doc.exists) return;
+    const d=doc.data();
+    blRoundBots=d.bots||[];
+    blRenderArena();
+  });
+}
+
+// ── Render the live arena cards ──
+function blRenderArena(){
+  const grid=document.getElementById('balloon-arena-grid');
+  if(!grid) return;
+  if(!blRoundBots.length){
+    grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:var(--muted);font-size:0.85rem;padding:20px 0">Setup a round to see bots here</div>';
+    return;
+  }
+  grid.innerHTML='';
+  blRoundBots.forEach(bot=>{
+    const card=document.createElement('div');
+    card.style.cssText='background:var(--light);border:2px solid '+(bot.popped?'var(--danger)':'var(--success)')+';border-radius:10px;padding:12px 8px;text-align:center;transition:all 0.3s';
+    card.innerHTML=`
+      <div style="font-size:2rem;margin-bottom:4px">${bot.popped?'💥':'🎈'}</div>
+      <div style="font-weight:700;color:var(--navy);font-size:0.82rem;margin-bottom:2px">${bot.botName}</div>
+      <div style="font-size:0.72rem;color:var(--muted);margin-bottom:8px">${bot.teamName}</div>
+      <div style="font-size:0.7rem;font-weight:700;color:${bot.popped?'var(--danger)':'var(--success)'};margin-bottom:8px">${bot.popped?'💥 Popped @'+bot.popTime.toFixed(1)+'s':'🟢 Active'}</div>
+      ${!bot.popped?`<button class="btn btn-danger btn-xs" onclick="balloonPop('${bot.botName}')">💥 Pop!</button>`:'<span style="font-size:0.7rem;color:var(--danger);font-weight:700">ELIMINATED</span>'}
+    `;
+    grid.appendChild(card);
+  });
+  // Update elim order text
+  const order=document.getElementById('balloon-elim-order');
+  if(order){
+    const elims=blRoundBots.filter(b=>b.popped).sort((a,b)=>a.popTime-b.popTime);
+    const alive=blRoundBots.filter(b=>!b.popped);
+    const aliveNames=alive.map(b=>`<span style="color:var(--success);font-weight:600">🎈 ${b.botName}</span>`);
+    const elimNames=elims.map((b,i)=>`<span style="color:var(--danger)">${i+1}. 💥 ${b.botName} (${b.popTime.toFixed(1)}s)</span>`);
+    order.innerHTML=[...aliveNames,...elimNames].join(' &nbsp;·&nbsp; ')||'—';
+  }
+}
+
+function blCalcElapsed(){ return (!blTimerData?.startTime||!blTimerData?.running)?0:(Date.now()-blTimerData.startTime.toMillis())/1000; }
+
+async function balloonStartMatch(){
+  if(!blRoundBots.length){alert('Setup a round with bots first');return;}
+  await blTimerDoc.set({startTime:firebase.firestore.Timestamp.now(),running:true,remainingTime:BALLOON_DURATION});
+  await blRoundDoc.set({...await blRoundDoc.get().then(d=>d.data()), active:true, startedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  document.getElementById('balloon-match-status').textContent='⚔️ Round In Progress!';
+}
+async function balloonPauseMatch(){
+  if(!blTimerData?.running) return;
+  const rem=BALLOON_DURATION-blCalcElapsed();
+  await blTimerDoc.set({...blTimerData,running:false,remainingTime:Math.max(0,rem)});
+  document.getElementById('balloon-match-status').textContent='⏸ Paused';
+}
+async function balloonResetMatch(){
+  if(!confirm('Reset round timer?')) return;
+  await blTimerDoc.set({startTime:null,running:false,remainingTime:BALLOON_DURATION});
+  document.getElementById('balloon-match-status').textContent='Waiting for round...';
+}
+
+// ── Setup the round: select which registered bots are participating ──
+async function balloonSetupRound(){
+  const roundNum=parseInt(document.getElementById('balloon-round-num').value)||1;
+  const roundType=document.getElementById('balloon-round-type').value;
+  // Collect checked bots from the registered list
+  const checked=[...document.querySelectorAll('.bl-bot-check:checked')];
+  if(checked.length<2){alert('Select at least 2 bots for the round');return;}
+  const bots=checked.map(cb=>{
+    const d=JSON.parse(cb.dataset.bot);
+    return {botName:d.botName,teamName:d.teamName,popped:false,popTime:null,place:null};
+  });
+  blElimOrder=[];
+  await blRoundDoc.set({active:false,roundNumber:roundNum,roundType,bots,startedAt:null,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  await blTimerDoc.set({startTime:null,running:false,remainingTime:BALLOON_DURATION});
+  document.getElementById('balloon-match-status').textContent='✅ Round '+roundNum+' set up — '+bots.length+' bots ready!';
+  alert('Round '+roundNum+' set up with '+bots.length+' bots. Press "Start Round" when ready!');
+}
+
+// ── Pop a bot by name ──
+async function balloonPop(botName){
+  if(!blTimerData?.running){alert('Start the round timer first');return;}
+  const bot=blRoundBots.find(b=>b.botName===botName&&!b.popped);
+  if(!bot){alert('Bot not found or already popped');return;}
+  if(!confirm(`Pop ${botName}'s balloon?`)) return;
+  const popTime=blCalcElapsed();
+  const alive=blRoundBots.filter(b=>!b.popped&&b.botName!==botName);
+  // Update the bots array in Firestore
+  const updatedBots=blRoundBots.map(b=>b.botName===botName?{...b,popped:true,popTime}:b);
+  await blRoundDoc.set({...await blRoundDoc.get().then(d=>d.data()),bots:updatedBots,updatedAt:firebase.firestore.FieldValue.serverTimestamp()},{merge:true});
+  // Auto-pause if only 1 bot left
+  if(alive.length===1){
+    await balloonPauseMatch();
+    document.getElementById('balloon-match-status').textContent='🏆 '+alive[0].botName+' wins!';
+    alert('🏆 '+alive[0].botName+' is the last bot standing!');
+  } else if(alive.length===0){
+    await balloonPauseMatch();
+    document.getElementById('balloon-match-status').textContent='💥 All bots eliminated!';
+  }
+}
+
+// ── Save round result to Firestore ──
+async function balloonSaveResult(){
+  if(!blRoundBots.length){alert('No round active');return;}
+  const roundSnap=await blRoundDoc.get();
+  const rd=roundSnap.data();
+  const alive=blRoundBots.filter(b=>!b.popped);
+  const winner=alive.length===1?alive[0].botName:(alive.length===0?'draw':'timeout');
+  const elimOrder=blRoundBots.filter(b=>b.popped).sort((a,b)=>a.popTime-b.popTime).map(b=>({botName:b.botName,teamName:b.teamName,popTime:b.popTime}));
+  const duration=BALLOON_DURATION-(blTimerData?.remainingTime??BALLOON_DURATION);
+  await blResultsCol.add({
+    roundNumber:rd.roundNumber,
+    roundType:rd.roundType,
+    bots:blRoundBots,
+    winner,
+    elimOrder,
+    duration:parseFloat(duration.toFixed(1)),
+    judgeNotes:document.getElementById('balloon-judge-notes').value.trim(),
+    timestamp:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  // Update leaderboard stats in Firestore
+  for(const bot of blRoundBots){
+    const isWinner=(bot.botName===winner);
+    const survived=!bot.popped;
+    const ex=await bldb.collection('balloon-leaderboard').where('botName','==',bot.botName).get();
+    if(ex.empty){
+      await bldb.collection('balloon-leaderboard').add({
+        botName:bot.botName,teamName:bot.teamName,
+        wins:isWinner?1:0,survived:survived?1:0,
+        popsMade:0,bestTime:isWinner&&!survived?null:null,
+        totalRounds:1,lastUpdated:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    } else {
+      const cd=ex.docs[0].data();
+      await ex.docs[0].ref.update({
+        wins:cd.wins+(isWinner?1:0),
+        survived:cd.survived+(survived?1:0),
+        totalRounds:cd.totalRounds+1,
+        lastUpdated:firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+  }
+  document.getElementById('balloon-judge-notes').value='';
+  alert('Round result saved!');
+}
+
+async function balloonClearMatch(){
+  if(!confirm('Clear current round?')) return;
+  blRoundBots=[];blElimOrder=[];
+  await blRoundDoc.set({active:false,roundNumber:1,roundType:'qualifier',bots:[],startedAt:null});
+  await blTimerDoc.set({startTime:null,running:false,remainingTime:BALLOON_DURATION});
+  document.getElementById('balloon-match-status').textContent='Waiting for round...';
+  document.getElementById('balloon-judge-notes').value='';
+  blRenderArena();
+}
+
+async function balloonAddBot(){
+  const name=document.getElementById('balloon-new-bot').value.trim();
+  const team=document.getElementById('balloon-bot-team').value.trim();
+  if(!name||!team) return alert('Enter name and team');
+  const snap=await blBotsCol.where('botName','==',name).get();
+  if(!snap.empty) return alert('Bot already registered');
+  await blBotsCol.add({botName:name,teamName:team,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('balloon-new-bot').value='';
+  document.getElementById('balloon-bot-team').value='';
+  blLoadBots();
+}
+
+async function blLoadBots(){
+  const snap=await blBotsCol.orderBy('createdAt','desc').get();
+  const ul=document.getElementById('balloon-bots-list');
+  ul.innerHTML='';
+  snap.forEach(doc=>{
+    const d=doc.data();
+    const li=document.createElement('li');
+    li.innerHTML=`
+      <label style="display:flex;align-items:center;gap:8px;flex:1;cursor:pointer">
+        <input type="checkbox" class="bl-bot-check" data-bot='${JSON.stringify({botName:d.botName,teamName:d.teamName})}' style="width:15px;height:15px;accent-color:var(--purple)" />
+        <span class="bot-info-text">${d.botName} <span style="color:var(--muted);font-weight:400">(${d.teamName})</span></span>
+      </label>
+    `;
+    const acts=document.createElement('div'); acts.className='btn-actions';
+    const rbtn=document.createElement('button'); rbtn.className='btn btn-danger btn-xs'; rbtn.textContent='✕';
+    rbtn.onclick=async()=>{ if(confirm('Remove bot?')){ await blBotsCol.doc(doc.id).delete(); blLoadBots(); } };
+    acts.appendChild(rbtn); li.appendChild(acts); ul.appendChild(li);
+  });
+}
+
+function blListenResults(){
+  blResultsCol.orderBy('timestamp','desc').onSnapshot(snap=>{
+    const tbody=document.getElementById('balloon-results-body');
+    tbody.innerHTML='';
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const tr=document.createElement('tr');
+      const elimStr=(d.elimOrder||[]).map((e,i)=>`${i+1}.${e.botName}(${e.popTime?.toFixed(1)}s)`).join(', ')||'—';
+      const participantNames=(d.bots||[]).map(b=>b.botName).join(', ')||'—';
+      tr.innerHTML=`<td>R${d.roundNumber||'—'}</td><td><span class="stat-chip">${d.roundType||'—'}</span></td><td><b>🏆 ${d.winner}</b></td><td style="font-size:0.78rem">${participantNames}</td><td style="font-size:0.76rem;color:var(--muted)">${elimStr}</td><td>${d.duration!=null?d.duration.toFixed(1)+'s':'—'}</td><td><button class="btn btn-danger btn-sm" onclick="blRemoveResult('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+    blUpdateLeaderboard(snap.docs);
+  });
+}
+
+function blUpdateLeaderboard(docs){
+  const stats={};
+  docs.forEach(doc=>{
+    const d=doc.data();
+    (d.bots||[]).forEach(b=>{
+      if(!stats[b.botName]) stats[b.botName]={name:b.botName,team:b.teamName,wins:0,survived:0,popsMade:0,bestSurvival:null,rounds:0};
+      stats[b.botName].rounds++;
+      if(b.botName===d.winner&&d.winner!=='draw'&&d.winner!=='timeout') stats[b.botName].wins++;
+      if(!b.popped) stats[b.botName].survived++;
+    });
+    // pops made = bots this bot eliminated (tracked via elimOrder pop order — winner gets credit for last pop)
+    (d.elimOrder||[]).forEach((e,idx,arr)=>{
+      // credit the bot that was NOT this eliminated bot and was still alive — simplified: winner gets credit for all pops
+    });
+    if(d.winner&&d.winner!=='draw'&&d.winner!=='timeout'&&d.duration){
+      const s=stats[d.winner];
+      if(s) s.bestSurvival=s.bestSurvival===null?d.duration:Math.min(s.bestSurvival,d.duration);
+    }
+  });
+  const sorted=Object.values(stats).sort((a,b)=>b.wins!==a.wins?b.wins-a.wins:b.survived-a.survived);
+  const tbody=document.getElementById('balloon-leaderboard-body');
+  tbody.innerHTML='';
+  sorted.forEach((b,i)=>{
+    const tr=document.createElement('tr');
+    if(i===0)tr.classList.add('position-1');else if(i===1)tr.classList.add('position-2');else if(i===2)tr.classList.add('position-3');
+    tr.innerHTML=`<td>${i+1}</td><td>${b.name}</td><td>${b.team}</td><td>${b.wins}</td><td>${b.popsMade}</td><td>${b.survived}</td><td>${b.bestSurvival!==null?b.bestSurvival.toFixed(1)+'s':'—'}</td>`;
+    tbody.appendChild(tr);
+  });
+}
+async function blRemoveResult(id){ if(confirm('Remove?')) await blResultsCol.doc(id).delete(); }
+
+// ============================================================
+// ==================  FIRE RESCUE BOTS  ======================
+// ============================================================
+const frdb=fbDbs['fire'];
+const frTimerDoc=frdb.collection('fireSettings').doc('matchTimer');
+const frMatchDoc=frdb.collection('fireSettings').doc('currentMatch');
+const frResultsCol=frdb.collection('fireResults');
+const frBotsCol=frdb.collection('fireBots');
+const frLeaderboardCol=frdb.collection('fireLeaderboard');
+const FIRE_DURATION=300;
+let frTimerData=null,frTimerInterval=null;
+
+function frListenTimer(){
+  frTimerDoc.onSnapshot(doc=>{
+    frTimerData=doc.exists?doc.data():null;
+    const el=document.getElementById('fire-timer');
+    if(!el) return;
+    if(frTimerData?.running){
+      el.classList.add('running');
+      if(frTimerInterval) clearInterval(frTimerInterval);
+      frTimerInterval=setInterval(()=>{
+        const elapsed=(Date.now()-frTimerData.startTime.toMillis())/1000+(frTimerData.pausedAt||0);
+        const rem=Math.max(0,FIRE_DURATION-elapsed);
+        const e2=document.getElementById('fire-timer');
+        e2.textContent=fmtCountdown(rem);
+        e2.classList.toggle('urgent',rem<=30&&rem>0);
+        if(rem<=0){clearInterval(frTimerInterval);document.getElementById('fire-match-status').textContent='⏰ Time Expired!';}
+      },500);
+    } else {
+      if(frTimerInterval) clearInterval(frTimerInterval);
+      el.classList.remove('running');
+      const rem=frTimerData?Math.max(0,FIRE_DURATION-(frTimerData.pausedAt||0)):FIRE_DURATION;
+      el.textContent=fmtCountdown(rem);
+    }
+  });
+}
+
+async function fireStartTimer(){
+  const now=firebase.firestore.Timestamp.now();
+  const pausedAt=frTimerData?.pausedAt||0;
+  await frTimerDoc.set({startTime:now,running:true,pausedAt});
+  document.getElementById('fire-match-status').textContent='🔥 Match In Progress';
+}
+async function firePauseTimer(){
+  if(!frTimerData?.running) return;
+  const elapsed=(Date.now()-frTimerData.startTime.toMillis())/1000+(frTimerData.pausedAt||0);
+  await frTimerDoc.set({...frTimerData,running:false,pausedAt:elapsed});
+  document.getElementById('fire-match-status').textContent='⏸ Paused';
+}
+async function fireResetTimer(){
+  if(!confirm('Reset fire match timer?')) return;
+  await frTimerDoc.set({startTime:null,running:false,pausedAt:0});
+  document.getElementById('fire-match-status').textContent='Waiting for match...';
+}
+
+async function fireSetupMatch(){
+  const b1n=document.getElementById('fire-bot1-name').value.trim();
+  const b1t=document.getElementById('fire-bot1-team').value.trim();
+  const b2n=document.getElementById('fire-bot2-name').value.trim();
+  const b2t=document.getElementById('fire-bot2-team').value.trim();
+  if(!b1n||!b2n){alert('Enter both team names');return;}
+  await frMatchDoc.set({bot1:{name:b1n,team:b1t},bot2:{name:b2n,team:b2t},teamAExtinguished:0,teamBExtinguished:0,updatedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('fire-bot1-live-name').textContent=b1n;
+  document.getElementById('fire-bot2-live-name').textContent=b2n;
+  document.getElementById('fire-bot1-live-status').textContent='Ready';
+  document.getElementById('fire-bot2-live-status').textContent='Ready';
+  document.getElementById('fire-team-a-extinguished').value=0;
+  document.getElementById('fire-team-b-extinguished').value=0;
+  fireUpdatePct('a'); fireUpdatePct('b');
+  alert('Match setup complete!');
+}
+
+function fireUpdatePct(team){
+  const val=parseInt(document.getElementById(`fire-team-${team}-extinguished`).value)||0;
+  document.getElementById(`fire-team-${team}-pct`).textContent=val+'%';
+  const icon=document.getElementById(`fire-team-${team}-icon`);
+  const bar=document.getElementById(`fire-bar-${team}`);
+  if(val>=100){icon.textContent='✅';bar.className='fire-pct-bar extinguished';}
+  else if(val>0){icon.textContent='🔥';bar.className='fire-pct-bar on-fire';}
+  else{icon.textContent='🔥';bar.className='fire-pct-bar';}
+}
+
+async function fireSaveResult(){
+  const b1n=document.getElementById('fire-bot1-name').value.trim();
+  const b1t=document.getElementById('fire-bot1-team').value.trim();
+  const b2n=document.getElementById('fire-bot2-name').value.trim();
+  const b2t=document.getElementById('fire-bot2-team').value.trim();
+  const winner=document.getElementById('fire-winner').value;
+  const outcome=document.getElementById('fire-outcome').value;
+  if(!b1n||!b2n){alert('Setup match first');return;}
+  if(!winner){alert('Select winner');return;}
+  const aPct=parseInt(document.getElementById('fire-team-a-extinguished').value)||0;
+  const bPct=parseInt(document.getElementById('fire-team-b-extinguished').value)||0;
+  const aTime=parseFloat(document.getElementById('fire-team-a-time').value)||null;
+  const bTime=parseFloat(document.getElementById('fire-team-b-time').value)||null;
+  const counterDoc=await frdb.collection('fireSettings').doc('matchCounter').get();
+  const cn=counterDoc.exists?counterDoc.data().count:1;
+  await frResultsCol.add({matchNumber:cn,teamA:{name:b1n,team:b1t,extinguishedPct:aPct,completionTime:aTime},teamB:{name:b2n,team:b2t,extinguishedPct:bPct,completionTime:bTime},winner,outcome,judgeNotes:document.getElementById('fire-judge-notes').value.trim(),timestamp:firebase.firestore.FieldValue.serverTimestamp()});
+  await frdb.collection('fireSettings').doc('matchCounter').set({count:cn+1});
+  await frUpdateLeaderboard([{name:b1n,team:b1t,pct:aPct,time:aTime,won:winner==='teamA'},{name:b2n,team:b2t,pct:bPct,time:bTime,won:winner==='teamB'}]);
+  alert('Match result saved!');
+}
+
+async function frUpdateLeaderboard(bots){
+  for(const bot of bots){
+    const ex=await frLeaderboardCol.where('botName','==',bot.name).get();
+    if(ex.empty){
+      await frLeaderboardCol.add({botName:bot.name,teamName:bot.team,wins:bot.won?1:0,losses:bot.won?0:1,totalPcts:[bot.pct],bestTime:bot.time,lastUpdated:firebase.firestore.FieldValue.serverTimestamp()});
+    } else {
+      const cd=ex.docs[0].data();
+      const pcts=[...(cd.totalPcts||[]),bot.pct];
+      const bestTime=bot.time?(cd.bestTime===null?bot.time:Math.min(cd.bestTime,bot.time)):cd.bestTime;
+      await ex.docs[0].ref.update({wins:cd.wins+(bot.won?1:0),losses:cd.losses+(bot.won?0:1),totalPcts:pcts,bestTime,lastUpdated:firebase.firestore.FieldValue.serverTimestamp()});
+    }
+  }
+}
+
+async function fireClearMatch(){
+  if(!confirm('Clear fire match?')) return;
+  ['fire-bot1-name','fire-bot1-team','fire-bot2-name','fire-bot2-team','fire-judge-notes','fire-team-a-time','fire-team-b-time'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('fire-team-a-extinguished').value=0;
+  document.getElementById('fire-team-b-extinguished').value=0;
+  document.getElementById('fire-winner').value='';
+  fireUpdatePct('a'); fireUpdatePct('b');
+  await frMatchDoc.delete();
+}
+
+async function fireAddBot(){
+  const name=document.getElementById('fire-new-bot').value.trim();
+  const team=document.getElementById('fire-bot-team').value.trim();
+  if(!name||!team) return alert('Enter name and team');
+  const snap=await frBotsCol.where('botName','==',name).get();
+  if(!snap.empty) return alert('Bot already registered');
+  await frBotsCol.add({botName:name,teamName:team,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  document.getElementById('fire-new-bot').value='';
+  document.getElementById('fire-bot-team').value='';
+  frLoadBots();
+}
+
+async function frLoadBots(){
+  const snap=await frBotsCol.get();
+  const ul=document.getElementById('fire-bots-list');
+  ul.innerHTML='';
+  snap.forEach(doc=>{
+    const d=doc.data();
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="bot-info-text">${d.botName} (${d.teamName})</span>`;
+    const acts=document.createElement('div'); acts.className='btn-actions';
+    [1,2].forEach(n=>{
+      const btn=document.createElement('button'); btn.className='btn btn-primary btn-xs'; btn.textContent=`→Team${n}`;
+      btn.onclick=()=>{
+        document.getElementById(`fire-bot${n}-name`).value=d.botName;
+        document.getElementById(`fire-bot${n}-team`).value=d.teamName;
+      };
+      acts.appendChild(btn);
+    });
+    const rbtn=document.createElement('button'); rbtn.className='btn btn-danger btn-xs'; rbtn.textContent='✕';
+    rbtn.onclick=async()=>{ if(confirm('Remove?')){ await frBotsCol.doc(doc.id).delete(); frLoadBots(); } };
+    acts.appendChild(rbtn); li.appendChild(acts); ul.appendChild(li);
+  });
+}
+
+function frListenResults(){
+  frResultsCol.orderBy('timestamp','desc').onSnapshot(snap=>{
+    const tbody=document.getElementById('fire-results-body');
+    tbody.innerHTML='';
+    let n=snap.size;
+    snap.forEach(doc=>{
+      const d=doc.data();
+      const wd=d.winner==='teamA'?d.teamA.name:d.winner==='teamB'?d.teamB.name:d.winner;
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>#${d.matchNumber}</td><td>${d.teamA.name}<br><small>${d.teamA.team}</small></td><td>${d.teamA.extinguishedPct}%</td><td>${d.teamA.completionTime!=null?d.teamA.completionTime.toFixed(1)+'s':'-'}</td><td>${d.teamB.name}<br><small>${d.teamB.team}</small></td><td>${d.teamB.extinguishedPct}%</td><td>${d.teamB.completionTime!=null?d.teamB.completionTime.toFixed(1)+'s':'-'}</td><td><b>${wd}</b></td><td>${d.outcome}</td><td><button class="btn btn-danger btn-sm" onclick="frRemoveResult('${doc.id}')">✕</button></td>`;
+      tbody.appendChild(tr);
+    });
+  });
+  frLeaderboardCol.onSnapshot(snap=>{
+    const sorted=snap.docs.slice().sort((a,b)=>{
+      const da=a.data(),db=b.data();
+      if(da.wins!==db.wins) return db.wins-da.wins;
+      const aa=da.totalPcts?.length?(da.totalPcts.reduce((s,x)=>s+x,0)/da.totalPcts.length):0;
+      const ba=db.totalPcts?.length?(db.totalPcts.reduce((s,x)=>s+x,0)/db.totalPcts.length):0;
+      return ba-aa;
+    });
+    const tbody=document.getElementById('fire-leaderboard-body');
+    tbody.innerHTML='';
+    sorted.forEach((doc,i)=>{
+      const d=doc.data();
+      const avg=d.totalPcts?.length?(d.totalPcts.reduce((s,x)=>s+x,0)/d.totalPcts.length).toFixed(1):0;
+      const tr=document.createElement('tr');
+      if(i===0)tr.classList.add('position-1');else if(i===1)tr.classList.add('position-2');else if(i===2)tr.classList.add('position-3');
+      tr.innerHTML=`<td>${i+1}</td><td>${d.botName}</td><td>${d.teamName}</td><td>${d.wins}</td><td>${d.losses}</td><td>${avg}%</td><td>${d.bestTime!=null?d.bestTime.toFixed(1)+'s':'-'}</td>`;
+      tbody.appendChild(tr);
+    });
+  });
+}
+async function frRemoveResult(id){ if(confirm('Remove?')) await frResultsCol.doc(id).delete(); }
+
+// ============================================================
+// INIT ALL LISTENERS  —  called once after login
+// ============================================================
+let listenersInitialized=false;
+function initAllEventListeners(){
+  if(listenersInitialized) return;
+  listenersInitialized=true;
+  // Soccer
+  sListenTimer('a');
+  sListenLive('a');
+  sListenFinalResults();
+  sLoadTeams(); sLoadFixtures();
+  // Sumo — initialise Firestore docs first, then attach listeners
+  suInitFirestoreDocs().then(() => {
+    suListenTimer(1); suListenTimer(2);
+    suListenRankings(); suListenMatches();
+    suLoadBots();
+  });
+  // Racing — initialise/reset Firestore docs first (clears stale finalTime), then attach listeners
+  rInitFirestoreDocs().then(() => {
+    [1,2,3].forEach(l=>rListenTimer(l));
+    rListenFinalResults();
+    rLoadBots();
+  });
+  // Battlebots — initialise Firestore docs first, then attach listeners
+  bInitFirestoreDocs().then(() => {
+    bListenTimer(); bListenResults(); bLoadBots();
+  });
+  // Maze — initialise Firestore docs first, then attach listeners
+  mInitFirestoreDocs().then(() => {
+    mListenTimer(); mListenFinalResults(); mListenAttempts(); mLoadBots();
+  });
+  // Balloon — initialise Firestore docs first, then attach listeners
+  blInitFirestoreDocs().then(() => {
+    blListenTimer(); blListenRound(); blListenResults(); blLoadBots();
+  });
+  // Fire
+  frListenTimer(); frListenResults(); frLoadBots();
+}
+
+// ============================================================
+// REGISTRATION PAGE
+// ============================================================
+const CATEGORY_LABELS={
+  soccer:'⚽ Soccerbots',sumo:'🤼 Sumo Bots',racing:'🏎️ Racing Bots',
+  battle:'⚔️ BattleBots',maze:'🧩 Maze Bots',balloon:'🎈 Balloon Combat',fire:'🔥 Fire Rescue'
+};
+function getRegCollection(cat){
+  const colMap={
+    soccer:()=>fbDbs['soccer'].collection('teams'),
+    sumo:()=>fbDbs['sumo'].collection('sumoBots'),
+    racing:()=>fbDbs['racing'].collection('bots'),
+    battle:()=>fbDbs['battle'].collection('battlebots'),
+    maze:()=>fbDbs['maze'].collection('mazeBots'),
+    balloon:()=>fbDbs['balloon'].collection('balloon-bots'),
+    fire:()=>fbDbs['fire'].collection('fireBots')
+  };
+  return colMap[cat]?colMap[cat]():null;
+}
+const regOverviewCol=fbDbs['soccer'].collection('registrations');
+let selectedCategories=[];
+
+function toggleCategory(el,cat){
+  el.classList.toggle('selected');
+  if(selectedCategories.includes(cat)) selectedCategories=selectedCategories.filter(c=>c!==cat);
+  else selectedCategories.push(cat);
+}
+
+async function submitRegistration(){
+  const teamName=document.getElementById('reg-team-name').value.trim();
+  const botName=document.getElementById('reg-bot-name').value.trim();
+  const contact=document.getElementById('reg-contact').value.trim();
+  const phone=document.getElementById('reg-phone').value.trim();
+  const school=document.getElementById('reg-school').value.trim();
+  const notes=document.getElementById('reg-notes').value.trim();
+  if(!teamName){alert('Please enter a team name');return;}
+  if(!botName){alert('Please enter a bot/robot name');return;}
+  if(selectedCategories.length===0){alert('Please select at least one category');return;}
+  const btn=document.querySelector('#registration-section .btn-primary');
+  btn.textContent='⏳ Registering...'; btn.disabled=true;
+  try {
+    const timestamp=firebase.firestore.FieldValue.serverTimestamp();
+    const successCategories=[];
+    for(const cat of selectedCategories){
+      const col=getRegCollection(cat);
+      if(!col) continue;
+      let entry={botName,teamName,contact,phone,school,notes,createdAt:timestamp};
+      if(cat==='sumo') entry.weight=0;
+      const existing=await col.where('botName','==',botName).get();
+      if(!existing.empty){successCategories.push(cat+' (already registered)');continue;}
+      await col.add(entry);
+      successCategories.push(cat);
+    }
+    await regOverviewCol.add({teamName,botName,contact,phone,school,notes,categories:selectedCategories,registeredAt:timestamp});
+    const successDiv=document.getElementById('reg-success');
+    const successMsg=document.getElementById('reg-success-msg');
+    const catLabels=successCategories.map(c=>CATEGORY_LABELS[c]||c).join(', ');
+    successMsg.textContent=`"${teamName}" (${botName}) registered for: ${catLabels}`;
+    successDiv.classList.add('show');
+    setTimeout(()=>successDiv.classList.remove('show'),6000);
+    clearRegForm();
+    loadRegistered();
+  } catch(err) {
+    alert('Registration failed: '+err.message);
+  } finally {
+    btn.textContent='🚀 Submit Registration'; btn.disabled=false;
+  }
+}
+
+function clearRegForm(){
+  ['reg-team-name','reg-bot-name','reg-contact','reg-phone','reg-school','reg-notes'].forEach(id=>document.getElementById(id).value='');
+  selectedCategories=[];
+  document.querySelectorAll('.category-chip.selected').forEach(el=>el.classList.remove('selected'));
+}
+
+async function loadRegistered(){
+  const filter=document.getElementById('reg-filter-cat')?.value||'all';
+  const tbody=document.getElementById('reg-table-body');
+  tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Loading...</td></tr>';
+  try {
+    const snap=await regOverviewCol.orderBy('registeredAt','desc').get();
+    let rows=snap.docs;
+    if(filter!=='all') rows=rows.filter(doc=>(doc.data().categories||[]).includes(filter));
+    if(rows.length===0){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No registrations found</td></tr>';return;}
+    tbody.innerHTML='';
+    rows.forEach((doc,i)=>{
+      const d=doc.data();
+      const cats=(d.categories||[]).map(c=>CATEGORY_LABELS[c]||c).join('<br>');
+      const ts=d.registeredAt?new Date(d.registeredAt.toDate()).toLocaleDateString():'—';
+      const tr=document.createElement('tr');
+      tr.innerHTML=`<td>${i+1}</td><td><strong>${d.teamName}</strong></td><td>${d.botName}</td><td>${d.contact||'—'}<br><small style="color:var(--muted)">${d.phone||''}</small></td><td>${d.school||'—'}</td><td style="font-size:0.78rem;line-height:1.8">${cats}</td><td>${ts}</td><td><button class="btn btn-danger btn-sm" onclick="removeRegistration('${doc.id}','${d.teamName}')">✕ Remove</button></td>`;
+      tbody.appendChild(tr);
+    });
+  } catch(err) {
+    tbody.innerHTML=`<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:24px">${err.message}</td></tr>`;
+  }
+}
+
+async function removeRegistration(id, teamName){
+  if(!confirm(`Remove "${teamName}" from registrations?\n\nNote: This removes them from the overview. To remove from a specific event's bot list, use the Remove button in that event's panel.`)) return;
+  await regOverviewCol.doc(id).delete();
+  loadRegistered();
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', ()=>{ initMatrix(); });
+</script>
+</body>
+</html>

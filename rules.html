@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/logo.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Competition Rules - Extrabotics</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<!-- Floating Tech Elements -->
+<div class="floating-elements">
+  <div class="tech-particle" style="top: 20%; left: 10%; animation-delay: 0s;">⚙️</div>
+  <div class="tech-particle" style="top: 60%; right: 15%; animation-delay: 2s;">🔧</div>
+  <div class="tech-particle" style="top: 40%; left: 80%; animation-delay: 4s;">📋</div>
+  <div class="tech-particle" style="top: 80%; left: 20%; animation-delay: 1s;">🤖</div>
+  <div class="tech-particle" style="top: 30%; right: 5%; animation-delay: 3s;">⚡</div>
+  <div class="tech-particle" style="top: 70%; right: 25%; animation-delay: 5s;">🏆</div>
+</div>
+
+<!-- Matrix Background -->
+<div class="matrix-bg">
+  <canvas id="matrix-canvas"></canvas>
+</div>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="#" class="logo glitch-effect">Extrabotics</a>
+    <ul class="nav-menu">
+      <li><a href="index.html" class="nav-link">Home</a></li>
+      <li><a href="about.html" class="nav-link">About</a></li>
+      <li><a href="events.html" class="nav-link">Events</a></li>
+      <li><a href="#" class="nav-link active">Rules</a></li>
+      <li><a href="contact.html" class="nav-link">Contact Us</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<section class="about-hero">
+  <div class="container">
+    <h1 class="fade-in-up">Competition Rules & Regulations</h1>
+    <p class="fade-in-up" style="animation-delay: 0.3s;">
+      Official guidelines for all Extrabotics robot competitions
+    </p>
+  </div>
+</section>
+
+<main class="container">
+
+<!-- Quick Navigation -->
+<div style="background: rgba(50, 130, 184, 0.2); padding: 30px; border-radius: 15px; margin: 40px 0; text-align: center;">
+  <h3 style="margin-bottom: 20px;">Jump to Category</h3>
+  <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: center;">
+    <a href="#general-specs" style="padding: 12px 24px; background: #3282b8; color: white; text-decoration: none; border-radius: 5px;">General Specs</a>
+    <a href="#balloon-combat" style="padding: 12px 24px; background: #3282b8; color: white; text-decoration: none; border-radius: 5px;">🎈 Balloon Combat</a>
+    <a href="#racing-bots" style="padding: 12px 24px; background: #3282b8; color: white; text-decoration: none; border-radius: 5px;">🏎️ Racing Bots</a>
+    <a href="#battle-bots" style="padding: 12px 24px; background: #3282b8; color: white; text-decoration: none; border-radius: 5px;">⚔️ Battle Bots</a>
+    <a href="#maze-solving" style="padding: 12px 24px; background: #3282b8; color: white; text-decoration: none; border-radius: 5px;">🧩 Maze Solving</a>
+    <a href="#soccer-bots" style="padding: 12px 24px; background: #3282b8; color: white; text-decoration: none; border-radius: 5px;">⚽ Soccer Bots</a>
+    <a href="#sumo-bots" style="padding: 12px 24px; background: #3282b8; color: white; text-decoration: none; border-radius: 5px;">🥋 Sumo Bots</a>
+  </div>
+</div>
+
+<!-- General Robot Specs -->
+<section id="general-specs" style="margin: 60px 0;">
+  <div style="background: rgba(15, 76, 117, 0.3); border: 2px solid #3282b8; border-radius: 15px; padding: 40px;">
+    <h2 style="color: #3282b8; margin-bottom: 30px;">⚙️ General Robot Specifications</h2>
+    <p style="font-size: 1.1rem; margin-bottom: 30px;">Universal requirements across all competition categories</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px;">
+      <!-- Size & Weight -->
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">📏 Size & Weight</h3>
+        <p><strong>Max Size:</strong> 35cm (L) × 33cm (W) × 33cm (H)</p>
+        <p><strong>Max Weight:</strong> 2 kg (battery included)</p>
+      </div>
+      
+      <!-- Power -->
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🔋 Power</h3>
+        <p><strong>Battery only</strong> (no external power during matches)</p>
+        <p><strong>Allowed types:</strong> Li-ion, NiMH</p>
+        <p><strong>Max voltage:</strong> 48V DC</p>
+        <p>Everything must be onboard</p>
+      </div>
+      
+      <!-- Motors -->
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">⚡ Motors</h3>
+        <p><strong>Max 8 DC motors</strong></p>
+        <p>Only <strong>brushed DC motors</strong> allowed</p>
+        <p><strong>Brushless</strong> for Racing bots category only</p>
+        <p><strong>Speed cap:</strong> ≤ 200 RPM @ 6V</p>
+        <p>Gear motors are allowed</p>
+      </div>
+      
+      <!-- Motor Drivers -->
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🔌 Motor Drivers</h3>
+        <p><strong>Only ONE driver board:</strong></p>
+        <p>• L298N</p>
+        <p>• L293D</p>
+        <p>• Other Arduino compatible drivers allowed</p>
+      </div>
+      
+      <!-- Microcontrollers -->
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🖥️ Microcontrollers</h3>
+        <p><strong>Pick any one:</strong></p>
+        <p>• Arduino Uno / Nano</p>
+        <p>• Raspberry Pi Pico</p>
+        <p>• ESP8266 / ESP32</p>
+        <p>• Any official Arduino-compatible board</p>
+        <p>Wireless modules (HC-05, NRF24L01, ESP8266) are okay</p>
+      </div>
+      
+      <!-- Control & Communication -->
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">📡 Control & Communication</h3>
+        <p><strong>Allowed:</strong> Bluetooth, Wi-Fi, RF (NRF24, 433 MHz), IR, gamepads</p>
+        <p>Robots must be <strong>human-controlled</strong> (except Maze solving)</p>
+        <p><strong>Line-of-sight control only</strong></p>
+        <p>No signal jamming</p>
+      </div>
+    </div>
+    
+    <!-- Frequency Rules -->
+    <div style="background: rgba(255, 200, 87, 0.1); border: 2px solid #ffc857; padding: 25px; border-radius: 10px; margin-top: 30px;">
+      <h3 style="color: #ffc857; margin-bottom: 15px;">📻 Frequency Rules (Kenya-Compliant)</h3>
+      <p><strong>Stick to license-free ISM bands:</strong></p>
+      <p>• 2.4 GHz (Wi-Fi, Bluetooth, NRF24)</p>
+      <p>• 433 MHz (low-power RF)</p>
+      <p style="margin-top: 15px;"><strong>⚠️ Avoid:</strong></p>
+      <p>• GSM / cellular bands (unless you have authorization)</p>
+      <p>• Anything that interferes with other robots or public systems</p>
+      <p style="margin-top: 15px; color: #ff4444;"><strong>Teams using unauthorized frequencies = DQ risk</strong></p>
+    </div>
+    
+    <!-- Control Inputs -->
+    <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px; margin-top: 30px;">
+      <h3 style="color: #3282b8; margin-bottom: 15px;">🎮 Control Inputs</h3>
+      <p>Use whatever combination works, as long as it's safe:</p>
+      <p>• Buttons / switches</p>
+      <p>• Joysticks</p>
+      <p>• Analog sensors (pots, gyro, accelerometer)</p>
+      <p>• Wireless controllers (NRF24, Bluetooth, IR, Wi-Fi, gamepads, PS2/PS3 pads)</p>
+    </div>
+  </div>
+</section>
+
+<!-- Balloon Combat League -->
+<section id="balloon-combat" style="margin: 60px 0;">
+  <div style="background: rgba(15, 76, 117, 0.3); border: 2px solid #3282b8; border-radius: 15px; padding: 40px;">
+    <h2 style="color: #3282b8; margin-bottom: 30px;">🎈 Balloon Combat League</h2>
+    
+    <div style="background: rgba(50, 130, 184, 0.15); padding: 25px; border-radius: 10px; margin-bottom: 30px;">
+      <h3 style="color: #3282b8;">🎯 Objective</h3>
+      <p style="font-size: 1.1rem;">Pop your opponent's balloon while protecting yours. Last robot with an unpopped balloon wins.</p>
+    </div>
+    
+    <div style="display: grid; gap: 25px;">
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🤖 Robot Setup</h3>
+        <p>• Each robot must have <strong>ONE balloon</strong> (unless referee decides to add more) securely attached at the rear or top</p>
+        <p>• A single popping tool is allowed (needle, pin, or sharp edge)</p>
+        <p>• No heated, explosive, or powered puncture mechanisms—pure mechanical only</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">⏱️ Match Format</h3>
+        <p>• <strong>Match duration:</strong> 2 minutes or until a balloon is popped</p>
+        <p>• If time ends with both balloons intact → Judges' decision based on:</p>
+        <p style="padding-left: 20px;">- Aggression</p>
+        <p style="padding-left: 20px;">- Control</p>
+        <p style="padding-left: 20px;">- Engagement</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">✅ Allowed Movement & Tactics</h3>
+        <p>• Ramming, pushing, and strategic positioning are allowed</p>
+        <p>• No lifting, flipping, or pinning an opponent for more than 5 seconds</p>
+        <p>• No attacks directly targeting electronics or chassis—balloon only</p>
+      </div>
+      
+      <div style="background: rgba(255, 68, 68, 0.1); border: 2px solid #ff4444; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #ff4444; margin-bottom: 15px;">⛔ Not Allowed</h3>
+        <p>• Sharp weapons extending beyond 5 cm</p>
+        <p>• Entangling materials (nets, ropes, glue, tape)</p>
+        <p>• Sprays, flames, chemicals, or pressure-based attacks</p>
+        <p>• Intentional damage to arena or referees' equipment</p>
+      </div>
+      
+      <div style="background: rgba(76, 209, 55, 0.1); border: 2px solid #4cd137; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #4cd137; margin-bottom: 15px;">🏆 Win Conditions</h3>
+        <p>• Opponent balloon pops ✨</p>
+        <p>• Opponent forfeits</p>
+        <p>• Opponent robot becomes immobile for 10 seconds</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Racing Bots -->
+<section id="racing-bots" style="margin: 60px 0;">
+  <div style="background: rgba(15, 76, 117, 0.3); border: 2px solid #3282b8; border-radius: 15px; padding: 40px;">
+    <h2 style="color: #3282b8; margin-bottom: 30px;">🏎️ Racing Bots</h2>
+    
+    <div style="background: rgba(50, 130, 184, 0.15); padding: 25px; border-radius: 10px; margin-bottom: 30px;">
+      <h3 style="color: #3282b8;">🎯 Category Overview</h3>
+      <p style="font-size: 1.1rem;">Racing Bots is all about speed, control, and precision. Drivers race their robots from the starting line to the end of the track. First robot to cross and stop at the finish line wins.</p>
+    </div>
+    
+    <div style="display: grid; gap: 25px;">
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🤖 Robot Setup</h3>
+        <p>• Robots must follow all General Specifications</p>
+        <p>• No high-speed or unsafe motor modifications outside allowed limits</p>
+        <p>• Wheels/tires must be safe and non-damaging to the track</p>
+        <p>• No boosters (compressed air, rockets, springs, etc.)</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🏁 Race Format</h3>
+        <p>• Race starts on a <strong>3…2…1…Go!</strong> countdown</p>
+        <p>• False starts = 1 restart warning, repeated offense → disqualification</p>
+        <p>• Track length and shape vary per event (straight, curves, obstacles)</p>
+        <p>• Robots must remain within the track boundaries at all times</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🎮 Control & Driving Rules</h3>
+        <p>• Only remote-controlled operation—no autonomous-only runs</p>
+        <p>• Drivers must stand at designated control zones</p>
+        <p>• No interference with opponent robots (no bumping, blocking, or side-swiping)</p>
+        <p>• If a robot flips or gets stuck, the driver may NOT physically touch it unless the referee allows a reset</p>
+      </div>
+      
+      <div style="background: rgba(255, 68, 68, 0.1); border: 2px solid #ff4444; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #ff4444; margin-bottom: 15px;">⛔ Not Allowed</h3>
+        <p>• Aggressive contact or intentional blocking</p>
+        <p>• Devices to push other robots off the track</p>
+        <p>• Jumping mechanisms or controlled drifting that damages the arena</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🏁 Finish Line Rules</h3>
+        <p>• Robot must cross the finish line fully</p>
+        <p>• Robot must come to a complete stop within the marked stopping zone</p>
+        <p>• Overshooting the stop zone = +2 second penalty or referee's discretion</p>
+      </div>
+      
+      <div style="background: rgba(76, 209, 55, 0.1); border: 2px solid #4cd137; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #4cd137; margin-bottom: 15px;">🏆 Win Conditions</h3>
+        <p>• First robot to cross the finish line AND stop properly wins</p>
+        <p>• If both fail to stop correctly → fastest corrected time wins</p>
+        <p>• If both teams violate rules → race is replayed</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Battle Bots -->
+<section id="battle-bots" style="margin: 60px 0;">
+  <div style="background: rgba(15, 76, 117, 0.3); border: 2px solid #3282b8; border-radius: 15px; padding: 40px;">
+    <h2 style="color: #3282b8; margin-bottom: 30px;">⚔️ Battle Bots</h2>
+    
+    <div style="display: grid; gap: 25px;">
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">👥 Team Setup</h3>
+        <p>• One participant per team</p>
+        <p>• Each team registers one robot only</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">⚔️ Match Format</h3>
+        <p>• <strong>1 vs 1 battles</strong></p>
+        <p>• <strong>Standard match time:</strong> 6 minutes or until one robot is disabled</p>
+        <p>• Referees may pause, restart, or extend the match when necessary</p>
+        <p>• <strong>Pre-match setup time:</strong> 30 seconds for robot placement</p>
+      </div>
+      
+      <div style="background: rgba(76, 209, 55, 0.1); border: 2px solid #4cd137; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #4cd137; margin-bottom: 15px;">🏆 How to Win</h3>
+        <p>• Opponent is immobilized or pushed out of the arena</p>
+        <p>• If no knockout: judges score aggression and control to decide the winner</p>
+        <p>• Judges' decisions are final</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">⏱️ Time-Outs</h3>
+        <p>• Each team gets one <strong>30-second time-out</strong> per match (referee must approve)</p>
+      </div>
+      
+      <div style="background: rgba(255, 68, 68, 0.1); border: 2px solid #ff4444; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #ff4444; margin-bottom: 15px;">⛔ Disqualification</h3>
+        <p>• Breaking rules repeatedly</p>
+        <p>• Unsafe driving or dangerous behavior</p>
+        <p>• Robots that do not meet the required specifications</p>
+      </div>
+      
+      <div style="background: rgba(255, 200, 87, 0.1); border: 2px solid #ffc857; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #ffc857; margin-bottom: 15px;">🛑 Emergency Stop Protocol</h3>
+        <p><strong>Referee may halt the match if:</strong></p>
+        <p>• Rules are violated</p>
+        <p>• A hazard emerges (fire, exposed wires, structural collapse)</p>
+        <p style="margin-top: 15px;"><strong>Teams may request an emergency stop if:</strong></p>
+        <p>• Their robot has a serious malfunction</p>
+        <p>• There is a genuine safety concern</p>
+        <p style="margin-top: 15px; color: #ff4444;"><strong>⚠️ Abusing emergency stops = penalties or disqualification</strong></p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">📊 Post-Match Review</h3>
+        <p>• Judges may take 1–2 minutes to finalize scores when needed</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Maze Solving Bots -->
+<section id="maze-solving" style="margin: 60px 0;">
+  <div style="background: rgba(15, 76, 117, 0.3); border: 2px solid #3282b8; border-radius: 15px; padding: 40px;">
+    <h2 style="color: #3282b8; margin-bottom: 30px;">🧩 Maze Solving Bots</h2>
+    
+    <div style="background: rgba(50, 130, 184, 0.15); padding: 25px; border-radius: 10px; margin-bottom: 30px;">
+      <h3 style="color: #3282b8;">🎯 Category Overview</h3>
+      <p style="font-size: 1.1rem;">Robots must autonomously navigate from the start point to the finish point through a printed or taped maze. This challenge tests logic, algorithms, sensor accuracy, and real-time decision-making. Fastest and most accurate bots win.</p>
+    </div>
+    
+    <div style="display: grid; gap: 25px;">
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🎯 Objective</h3>
+        <p>Build a robot that can:</p>
+        <p>• Detect and follow maze paths</p>
+        <p>• Handle turns, dead ends, and false routes</p>
+        <p>• Reach the end zone using onboard sensors and your algorithm</p>
+        <p style="margin-top: 10px; color: #ffc857;"><strong>⚠️ No remote control allowed during the run</strong></p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🗺️ Maze Details</h3>
+        <p>• Maze printed on a mat or outlined using black tape on white surface</p>
+        <p>• <strong>Maze complexity:</strong> 3–5 turns, including dead ends and false paths</p>
+        <p>• <strong>Path width:</strong> minimum 20 cm</p>
+        <p>• Official maze design will be shared directly with registered participants only</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🏁 Run Format</h3>
+        <p>• Each robot gets <strong>two attempts</strong></p>
+        <p>• Best time is recorded</p>
+        <p>• Robot must fully cross the finish zone</p>
+        <p>• If robot stops moving for 10 seconds, the run ends</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">📏 Scoring</h3>
+        <p>Bots are ranked by:</p>
+        <p>• Completion Time</p>
+        <p>• Path Accuracy (no off-track moments)</p>
+        <p>• Smooth Navigation (minimal reversing, minimal getting stuck)</p>
+        <p style="margin-top: 10px;"><strong>Tie-breaker:</strong> fastest clean run</p>
+      </div>
+      
+      <div style="background: rgba(255, 68, 68, 0.1); border: 2px solid #ff4444; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #ff4444; margin-bottom: 15px;">⛔ Not Allowed</h3>
+        <p>• Remote control during run</p>
+        <p>• External computers or base stations feeding commands</p>
+        <p>• Physical maze modifications</p>
+        <p>• Line-guiding using markers placed by teams</p>
+      </div>
+      
+      <div style="background: rgba(76, 209, 55, 0.1); border: 2px solid #4cd137; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #4cd137; margin-bottom: 15px;">🏆 Win Conditions</h3>
+        <p>• Fastest successfully completed run wins</p>
+        <p>• If no bot completes the maze → closest to the finish point wins</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Soccer Bots -->
+<section id="soccer-bots" style="margin: 60px 0;">
+  <div style="background: rgba(15, 76, 117, 0.3); border: 2px solid #3282b8; border-radius: 15px; padding: 40px;">
+    <h2 style="color: #3282b8; margin-bottom: 30px;">⚽ SoccerBots</h2>
+    
+    <div style="background: rgba(50, 130, 184, 0.15); padding: 25px; border-radius: 10px; margin-bottom: 30px;">
+      <h3 style="color: #3282b8;">⚽ Category Overview</h3>
+      <p style="font-size: 1.1rem;">SoccerBots is designed for creativity and fun. Perfect for beginners, students, hobbyists, and experimental robot designs. Specs are flexible — the focus is teamwork, control, and learning.</p>
+    </div>
+    
+    <div style="display: grid; gap: 25px;">
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">⏱️ Match Duration</h3>
+        <p>• <strong>Two halves:</strong> 5 minutes each</p>
+        <p>• <strong>Halftime:</strong> 2-minute break</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🏟️ Field Setup</h3>
+        <p>• <strong>Field size:</strong> 120 cm × 80 cm</p>
+        <p>• Match starts with a kickoff from the center</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🥅 Scoring Rules</h3>
+        <p>• Goal counts only when the entire ball crosses the goal line</p>
+        <p>• Own goals = point for the opponent</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">⚙️ Ball Interaction</h3>
+        <p><strong>Robots may:</strong></p>
+        <p>• Push</p>
+        <p>• Drag</p>
+        <p>• Kick</p>
+        <p>• Deflect</p>
+        <p style="margin-top: 15px; color: #ff4444;"><strong>Not allowed:</strong></p>
+        <p>• Full trapping</p>
+        <p>• Scooping or lifting the ball</p>
+        <p>• Hiding the ball — it must stay visible and contestable</p>
+      </div>
+      
+      <div style="background: rgba(255, 200, 87, 0.1); border: 2px solid #ffc857; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #ffc857; margin-bottom: 15px;">🧤 Goal Area Rules</h3>
+        <p>• A robot cannot stay inside the goal area for more than 5 seconds</p>
+        <p>• Robots cannot enter the goal area to score (Goals must be taken from outside the restricted zone)</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🧭 Fair Play</h3>
+        <p>• No ramming or intentional high-force hits</p>
+        <p>• No pinning or blocking opponents unfairly</p>
+        <p>• No messing with the opponent's signal or control system</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🤖 Sensors & Control</h3>
+        <p>• Sensors are optional</p>
+        <p>• Autonomy is not required — remote control is allowed</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Sumo Bots -->
+<section id="sumo-bots" style="margin: 60px 0;">
+  <div style="background: rgba(15, 76, 117, 0.3); border: 2px solid #3282b8; border-radius: 15px; padding: 40px;">
+    <h2 style="color: #3282b8; margin-bottom: 30px;">🥋 SumoBots</h2>
+    
+    <div style="background: rgba(50, 130, 184, 0.15); padding: 25px; border-radius: 10px; margin-bottom: 30px;">
+      <h3 style="color: #3282b8;">🥋 Category Overview</h3>
+      <p style="font-size: 1.1rem;">SumoBots face off in a classic robot sumo showdown. The goal: push your opponent out of the ring while staying inside yourself.</p>
+    </div>
+    
+    <div style="display: grid; gap: 25px;">
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🏟️ Arena</h3>
+        <p>• Standard circular sumo ring</p>
+        <p>• Edges clearly marked</p>
+        <p>• Robots start facing outward or as directed by the referee</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">⏱️ Match Duration</h3>
+        <p>• One round per match</p>
+        <p>• <strong>Max duration:</strong> 2 minutes</p>
+        <p>• If no winner after 2 minutes → judges decide based on aggression + control</p>
+      </div>
+      
+      <div style="background: rgba(76, 209, 55, 0.1); border: 2px solid #4cd137; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #4cd137; margin-bottom: 15px;">🎯 How to Win</h3>
+        <p>A robot wins if:</p>
+        <p>• Opponent is pushed outside the ring</p>
+        <p>• Opponent becomes immobile for 10 seconds</p>
+        <p>• Opponent violates rules leading to DQ</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">⚙️ Robot Behavior Rules</h3>
+        <p>• Pushing, driving, and controlled contact are allowed</p>
+        <p>• No flipping, lifting, grappling, or hooking mechanisms</p>
+        <p>• No sharp edges or weapons — this is a pure pushing match</p>
+        <p>• No intentionally damaging the opponent</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">📏 Movement Rules</h3>
+        <p>• Robot must stay inside the ring</p>
+        <p>• If any part of the robot touches outside → instant loss</p>
+        <p>• No stalling or avoiding combat (referee may warn or penalize)</p>
+      </div>
+      
+      <div style="background: rgba(255, 68, 68, 0.1); border: 2px solid #ff4444; padding: 25px; border-radius: 10px;">
+        <h3 style="color: #ff4444; margin-bottom: 15px;">⛔ Not Allowed</h3>
+        <p>• Sprays, glue, magnets that interact with the arena</p>
+        <p>• Entangling tools (chains, nets, ropes)</p>
+        <p>• Spinning blades or offensive weapons</p>
+        <p>• Jamming or interfering with opponent control signals</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🕹️ Control</h3>
+        <p>• Remote-controlled operation only</p>
+        <p>• Drivers must remain in their designated zone</p>
+        <p>• No coaching or outside assistance once the match starts</p>
+      </div>
+      
+      <div style="background: rgba(50, 130, 184, 0.1); padding: 25px; border-radius: 10px;">
+        <h3 style="color: #3282b8; margin-bottom: 15px;">🏆 Tie-Breaker</h3>
+        <p>If both robots stay in the ring with no clear push-out:</p>
+        <p>• Aggression, control, and ring dominance are judged</p>
+        <p>• Judges' decision is final</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Important Notes -->
+<section style="margin: 60px 0;">
+  <div style="background: rgba(255, 200, 87, 0.2); border: 2px solid #ffc857; border-radius: 15px; padding: 40px;">
+    <h2 style="color: #ffc857; margin-bottom: 30px;">⚠️ Important Notes</h2>
+    <div style="font-size: 1.1rem; line-height: 1.8;">
+      <p style="margin-bottom: 15px;">• All rules are subject to referee's interpretation and final judgment during competitions</p>
+      <p style="margin-bottom: 15px;">• Safety is the top priority — any robot deemed unsafe will not be allowed to compete</p>
+      <p style="margin-bottom: 15px;">• Teams are responsible for ensuring their robots comply with all specifications before registration</p>
+      <p style="margin-bottom: 15px;">• Organizers reserve the right to modify rules with advance notice to all participants</p>
+      <p style="margin-bottom: 15px;">• Sportsmanship and respect for opponents, officials, and equipment are mandatory</p>
+      <p style="margin-bottom: 15px;">• Any form of cheating, rule violation, or unsportsmanlike conduct may result in immediate disqualification</p>
+    </div>
+  </div>
+</section>
+
+<!-- Contact Section -->
+<section style="margin: 60px 0;">
+  <div style="background: rgba(50, 130, 184, 0.2); border: 2px solid #3282b8; border-radius: 15px; padding: 40px; text-align: center;">
+    <h2 style="color: #3282b8; margin-bottom: 20px;">Questions About the Rules?</h2>
+    <p style="font-size: 1.2rem; margin-bottom: 30px;">Our team is here to help clarify any questions you may have</p>
+    <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: center;">
+      <a href="contact.html" style="padding: 15px 40px; background: #3282b8; color: white; text-decoration: none; border-radius: 8px; font-size: 1.1rem;">Contact Us</a>
+      <a href="events.html" style="padding: 15px 40px; background: #0f4c75; color: white; text-decoration: none; border-radius: 8px; font-size: 1.1rem;">View Events</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<script>
+  // Initialize matrix background
+  document.addEventListener('DOMContentLoaded', function() {
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const letters = '01010101EXTRA1010101BOTICS101010100101';
+    const fontSize = 12;
+    const columns = canvas.width / fontSize;
+    
+    const drops = [];
+    for(let i = 0; i < columns; i++) {
+      drops[i] = 1;
+    }
+    
+    function drawMatrix() {
+      ctx.fillStyle = 'rgba(27, 38, 44, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#0f4c75';
+      ctx.font = `${fontSize}px monospace`;
+      
+      for(let i = 0; i < drops.length; i++) {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        
+        if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        
+        drops[i]++;
+      }
+    }
+    
+    setInterval(drawMatrix, 33);
+    
+    // Smooth scroll for anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+        }
+      });
+    });
+  });
+
+  // Handle window resize
+  window.addEventListener('resize', function() {
+    const canvas = document.getElementById('matrix-canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+</script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Extrabotics</h3>
+        <p>Pushing the boundaries of robotics innovation through cutting-edge technology and education.</p>
+        <div class="social-links">
+          <a href="contact.html" class="social-link">📧</a>
+          <a href="contact.html" class="social-link">📱</a>
+          <a href="contact.html" class="social-link">🔗</a>
+        </div>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="about.html">About</a></li>
+          <li><a href="events.html">Events</a></li>
+          <li><a href="gallery.html">Gallery</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="events.html">Robotics Competitions</a></li>
+          <li><a href="events.html">Educational Workshops</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Contact</h4>
+        <div class="contact-info">
+          <p>Ruaraka, Outering Road</p>
+          <p>+254 706 781 886</p>
+          <p>info@extrabotics.com</p>
+          <p>competitions@extrabotics.com</p>
+          <p>proposals@extrabotics.com</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2025 Extrabotics. All rights reserved. | Designed for innovation and excellence.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

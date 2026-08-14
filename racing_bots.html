@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="icon" type="image/png" href="/logo.png">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Results - Extrabotics</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .penalty-btn {
+    min-height: 56px;
+    line-height: 1.3;
+    font-size: 0.95rem;
+    touch-action: manipulation;
+  }
+  .penalty-btn:active {
+    transform: scale(0.97);
+  }
+</style>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.3.0/firebase-firestore-compat.js"></script>
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyAgZ0xeiV4nsOTcn53jmQNhJeHQ0Lyc_oM",
+    authDomain: "racingbots.firebaseapp.com",
+    projectId: "racingbots",
+    storageBucket: "racingbots.firebasestorage.app",
+    messagingSenderId: "356635411757",
+    appId: "1:356635411757:web:01815cd438eaa1521dbfa4",
+    measurementId: "G-T1B0RE39RG"
+  };
+</script>
+</head>
+<body>
+<!-- Floating Tech Elements -->
+<div class="floating-elements">
+  <div class="tech-particle" style="top: 20%; left: 10%; animation-delay: 0s;">⚙️</div>
+  <div class="tech-particle" style="top: 60%; right: 15%; animation-delay: 2s;">🔧</div>
+  <div class="tech-particle" style="top: 40%; left: 80%; animation-delay: 4s;">💾</div>
+  <div class="tech-particle" style="top: 80%; left: 20%; animation-delay: 1s;">🖥️</div>
+  <div class="tech-particle" style="top: 30%; right: 5%; animation-delay: 3s;">📊</div>
+  <div class="tech-particle" style="top: 70%; right: 25%; animation-delay: 5s;">🔬</div>
+</div>
+
+<!-- Matrix Background -->
+<div class="matrix-bg">
+  <canvas id="matrix-canvas"></canvas>
+</div>
+
+<!-- Navigation -->
+<nav class="navbar">
+  <div class="nav-container">
+    <a href="#" class="logo glitch-effect">Extrabotics</a>
+    <ul class="nav-menu">
+      <li><a href="index" class="nav-link">Home</a></li>
+      <li><a href="about" class="nav-link">About</a></li>
+      <li><a href="events" class="nav-link">Events</a></li>
+      <li><a href="#" class="nav-link active">Results</a></li>
+      <li><a href="contact" class="nav-link">Contact Us</a></li>
+      <li><a href="login" class="nav-link">Academy</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- About Hero Section -->
+<section class="about-hero">
+  <div class="container">
+    <h1 class="fade-in-up">Racing Bots Results</h1>
+    <p class="fade-in-up" style="animation-delay: 0.3s;">
+      Track real-time performance for two bots racing simultaneously.
+    </p>
+  </div>
+</section>
+
+<main class="container2">
+
+<!-- Dual Timer Display -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0;">
+  <div>
+    <h3 style="text-align: center;">🏁 Bot 1</h3>
+    <div id="timer-box-1" class="timer-display">00:00.000</div>
+    <div id="bot-info-1" style="text-align: center; margin-top: 10px;">
+      <p><strong>Waiting for bot...</strong></p>
+    </div>
+  </div>
+  
+  <div>
+    <h3 style="text-align: center;">🏁 Bot 2</h3>
+    <div id="timer-box-2" class="timer-display">00:00.000</div>
+    <div id="bot-info-2" style="text-align: center; margin-top: 10px;">
+      <p><strong>Waiting for bot...</strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- Live Race Display -->
+<div id="live-race-box" class="live-match-display">
+  <h2>Current Race</h2>
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+    <div class="race-bot-card">
+      <h3>Lane 1</h3>
+      <p>No bot racing</p>
+    </div>
+    <div class="race-bot-card">
+      <h3>Lane 2</h3>
+      <p>No bot racing</p>
+    </div>
+  </div>
+</div>
+
+<div id="user-info" class="user-info"></div>
+
+<!-- Login Form -->
+<div id="login-form" class="login-form">
+  <h3>Judge Login</h3>
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
+  <button onclick="login()">Log In</button>
+</div>
+
+<!-- Bot Registration -->
+<div id="bot-registration" class="match-editor" style="display:none;">
+  <h3>Bot Registration</h3>
+  <input id="new-bot" type="text" placeholder="Enter bot name" />
+  <input id="bot-team" type="text" placeholder="Enter team name" />
+  <button onclick="addBot()">Add Bot</button>
+  
+  <h4>Registered Bots</h4>
+  <ul id="bots-list"></ul>
+</div>
+
+<!-- Dual Race Editor -->
+<div id="race-editor" class="match-editor" style="display:none;">
+  <h3>Dual Race Management</h3>
+  
+  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-top: 20px;">
+    <!-- Lane 1 -->
+    <div style="border: 2px solid; padding: 20px; border-radius: 10px;">
+      <h4 style="text-align: center;">Lane 1</h4>
+      <div class="input-group">
+        <label for="bot1Name">Bot Name:</label>
+        <input id="bot1Name" type="text" placeholder="Bot name" disabled />
+      </div>
+      <div class="input-group">
+        <label for="bot1Team">Team:</label>
+        <input id="bot1Team" type="text" placeholder="Team name" disabled />
+      </div>
+      <div class="input-group">
+        <label for="bot1Time">Time (seconds):</label>
+        <input id="bot1Time" type="number" step="0.001" min="0" placeholder="0.000" disabled />
+      </div>
+      <div class="input-group">
+        <label for="bot1Status">Status:</label>
+        <select id="bot1Status" disabled>
+          <option value="completed">Completed</option>
+          <option value="dnf">Did Not Finish</option>
+          <option value="disqualified">Disqualified</option>
+        </select>
+      </div>
+      <div class="button-group">
+        <button onclick="startTimer(1)" class="btn-primary">Start Timer</button>
+        <button onclick="stopTimer(1)" class="btn-secondary">Stop</button>
+        <button onclick="resetTimer(1)" class="btn-secondary">Reset</button>
+      </div>
+
+      <!-- Penalties -->
+      <div class="penalty-box" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed;">
+        <p style="text-align: center; margin-bottom: 8px;"><strong>Penalties</strong></p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button onclick="addPenalty(1, 'border')" class="btn-secondary penalty-btn">🚧 Border<br><span style="font-size:0.8rem;">+2s</span></button>
+          <button onclick="addPenalty(1, 'swirl')" class="btn-secondary penalty-btn">🌀 Swirl Cut<br><span style="font-size:0.8rem;">+3s</span></button>
+          <button onclick="addPenalty(1, 'other')" class="btn-secondary penalty-btn" style="grid-column: span 2;">⚠️ Other<br><span style="font-size:0.8rem;">+1s</span></button>
+        </div>
+        <ul id="penalty-list-1" style="margin-top: 8px; font-size: 0.9rem;"></ul>
+        <p style="text-align: center; margin-top: 5px;"><strong>Total Penalty: <span id="penalty-total-1">0.000</span>s</strong></p>
+      </div>
+
+      <button onclick="finishRace(1)" class="btn-primary" style="width: 100%; margin-top: 10px;">Finish Bot 1 ✅</button>
+    </div>
+    
+    <!-- Lane 2 -->
+    <div style="border: 2px solid; padding: 20px; border-radius: 10px;">
+      <h4 style="text-align: center;">Lane 2</h4>
+      <div class="input-group">
+        <label for="bot2Name">Bot Name:</label>
+        <input id="bot2Name" type="text" placeholder="Bot name" disabled />
+      </div>
+      <div class="input-group">
+        <label for="bot2Team">Team:</label>
+        <input id="bot2Team" type="text" placeholder="Team name" disabled />
+      </div>
+      <div class="input-group">
+        <label for="bot2Time">Time (seconds):</label>
+        <input id="bot2Time" type="number" step="0.001" min="0" placeholder="0.000" disabled />
+      </div>
+      <div class="input-group">
+        <label for="bot2Status">Status:</label>
+        <select id="bot2Status" disabled>
+          <option value="completed">Completed</option>
+          <option value="dnf">Did Not Finish</option>
+          <option value="disqualified">Disqualified</option>
+        </select>
+      </div>
+      <div class="button-group">
+        <button onclick="startTimer(2)" class="btn-primary">Start Timer</button>
+        <button onclick="stopTimer(2)" class="btn-secondary">Stop</button>
+        <button onclick="resetTimer(2)" class="btn-secondary">Reset</button>
+      </div>
+
+      <!-- Penalties -->
+      <div class="penalty-box" style="margin-top: 15px; padding-top: 15px; border-top: 1px dashed;">
+        <p style="text-align: center; margin-bottom: 8px;"><strong>Penalties</strong></p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button onclick="addPenalty(2, 'border')" class="btn-secondary penalty-btn">🚧 Border<br><span style="font-size:0.8rem;">+2s</span></button>
+          <button onclick="addPenalty(2, 'swirl')" class="btn-secondary penalty-btn">🌀 Swirl Cut<br><span style="font-size:0.8rem;">+3s</span></button>
+          <button onclick="addPenalty(2, 'other')" class="btn-secondary penalty-btn" style="grid-column: span 2;">⚠️ Other<br><span style="font-size:0.8rem;">+1s</span></button>
+        </div>
+        <ul id="penalty-list-2" style="margin-top: 8px; font-size: 0.9rem;"></ul>
+        <p style="text-align: center; margin-top: 5px;"><strong>Total Penalty: <span id="penalty-total-2">0.000</span>s</strong></p>
+      </div>
+
+      <button onclick="finishRace(2)" class="btn-primary" style="width: 100%; margin-top: 10px;">Finish Bot 2 ✅</button>
+    </div>
+  </div>
+  
+  <div class="button-group" style="justify-content: center; margin-top: 30px;">
+    <button onclick="startBothTimers()" class="btn-primary" style="font-size: 1.2rem; padding: 15px 40px;">🏁 Start Both Timers</button>
+    <button onclick="saveRaceResults()" class="btn-primary" style="font-size: 1.2rem; padding: 15px 40px;">💾 Save Both Results</button>
+    <button onclick="clearBothRaces()" class="btn-secondary">Clear Both Lanes</button>
+  </div>
+</div>
+
+<!-- Final Results Section -->
+<section id="final-results" class="results-section">
+  <div class="container">
+    <h2>Final Results</h2>
+    <table id="results-table" border="1" cellpadding="10">
+      <thead>
+        <tr>
+          <th>Position</th>
+          <th>Bot Name</th>
+          <th>Team</th>
+          <th>Raw Time</th>
+          <th>Penalties</th>
+          <th>Adjusted Time</th>
+          <th>Status</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="results-body"></tbody>
+    </table>
+  </div>
+</section>
+
+</main>
+
+<script>
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+
+  // Firestore references
+  const timer1Doc = db.collection('settings').doc('raceTimer1');
+  const timer2Doc = db.collection('settings').doc('raceTimer2');
+  const currentRace1Doc = db.collection('settings').doc('currentRace1');
+  const currentRace2Doc = db.collection('settings').doc('currentRace2');
+  const liveResultsCollection = db.collection('liveResults');
+  const finalResultsCollection = db.collection('finalResults');
+  const botsCollection = db.collection('bots');
+
+  // Timer state
+  let timer1Data = null;
+  let timer2Data = null;
+  let timer1Interval = null;
+  let timer2Interval = null;
+
+  // Penalty state (ref-assessed, e.g. touching the border on a turn/swirl)
+  const PENALTY_TYPES = {
+    border: { label: 'Touched Border', seconds: 2 },
+    swirl:  { label: 'Cut Swirl / Missed Turn', seconds: 3 },
+    other:  { label: 'Other Infraction', seconds: 1 }
+  };
+  let lanePenalties = { 1: [], 2: [] };
+
+  function getTotalPenaltySeconds(lane) {
+    return lanePenalties[lane].reduce((sum, p) => sum + p.seconds, 0);
+  }
+
+  function addPenalty(lane, type) {
+    const config = PENALTY_TYPES[type];
+    lanePenalties[lane].push({ type, label: config.label, seconds: config.seconds });
+    renderPenalties(lane);
+  }
+
+  function removePenalty(lane, index) {
+    lanePenalties[lane].splice(index, 1);
+    renderPenalties(lane);
+  }
+
+  function renderPenalties(lane) {
+    const list = document.getElementById(`penalty-list-${lane}`);
+    const totalEl = document.getElementById(`penalty-total-${lane}`);
+    list.innerHTML = '';
+
+    lanePenalties[lane].forEach((p, index) => {
+      const li = document.createElement('li');
+      li.textContent = `${p.label} (+${p.seconds.toFixed(3)}s) `;
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Remove';
+      removeBtn.onclick = () => removePenalty(lane, index);
+      li.appendChild(removeBtn);
+      list.appendChild(li);
+    });
+
+    totalEl.textContent = getTotalPenaltySeconds(lane).toFixed(3);
+  }
+
+  function clearPenalties(lane) {
+    lanePenalties[lane] = [];
+    renderPenalties(lane);
+  }
+
+  // Format time helper
+  function formatTime(milliseconds) {
+    const totalSeconds = milliseconds / 1000;
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = Math.floor(totalSeconds % 60);
+    const ms = Math.floor(milliseconds % 1000);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${ms.toString().padStart(3, '0')}`;
+  }
+
+  // Calculate elapsed time
+  function calculateElapsedTime(timerData) {
+    if (!timerData || !timerData.startTime || !timerData.running) return 0;
+    return Date.now() - timerData.startTime.toMillis();
+  }
+
+  // Start timer display for specific lane
+  function startTimerDisplay(lane) {
+    const timerBox = document.getElementById(`timer-box-${lane}`);
+    const timerData = lane === 1 ? timer1Data : timer2Data;
+    let interval = lane === 1 ? timer1Interval : timer2Interval;
+    
+    if (interval) clearInterval(interval);
+    
+    interval = setInterval(() => {
+      const data = lane === 1 ? timer1Data : timer2Data;
+      if (data && data.running) {
+        const elapsed = calculateElapsedTime(data);
+        timerBox.textContent = formatTime(elapsed);
+      }
+    }, 10);
+    
+    if (lane === 1) timer1Interval = interval;
+    else timer2Interval = interval;
+  }
+
+  // Listen to timer updates
+  function listenTimer(lane) {
+    const timerDoc = lane === 1 ? timer1Doc : timer2Doc;
+    const timerBox = document.getElementById(`timer-box-${lane}`);
+    
+    timerDoc.onSnapshot(doc => {
+      const data = doc.exists ? doc.data() : null;
+      
+      if (lane === 1) timer1Data = data;
+      else timer2Data = data;
+      
+      if (data && data.running) {
+        startTimerDisplay(lane);
+      } else {
+        const interval = lane === 1 ? timer1Interval : timer2Interval;
+        if (interval) clearInterval(interval);
+        timerBox.textContent = data?.finalTime ? formatTime(data.finalTime) : "00:00.000";
+      }
+    }, error => {
+      console.error(`Error listening to timer ${lane}:`, error);
+    });
+  }
+
+  // Start timer for specific lane
+  async function startTimer(lane) {
+    const timerDoc = lane === 1 ? timer1Doc : timer2Doc;
+    const now = firebase.firestore.Timestamp.now();
+    await timerDoc.set({ startTime: now, running: true, finalTime: null });
+  }
+
+  // Start both timers simultaneously
+  async function startBothTimers() {
+    const now = firebase.firestore.Timestamp.now();
+    await Promise.all([
+      timer1Doc.set({ startTime: now, running: true, finalTime: null }),
+      timer2Doc.set({ startTime: now, running: true, finalTime: null })
+    ]);
+  }
+
+  // Stop timer for specific lane
+  async function stopTimer(lane) {
+    const timerDoc = lane === 1 ? timer1Doc : timer2Doc;
+    const timerData = lane === 1 ? timer1Data : timer2Data;
+    const timeInput = document.getElementById(`bot${lane}Time`);
+    
+    if (!timerData || !timerData.running || !timerData.startTime) return;
+    
+    const finalTime = calculateElapsedTime(timerData);
+    await timerDoc.set({ ...timerData, running: false, finalTime });
+    
+    // Auto-fill the race time
+    timeInput.value = (finalTime / 1000).toFixed(3);
+  }
+
+  // Reset timer for specific lane
+  async function resetTimer(lane) {
+    if (!confirm(`Reset timer for Lane ${lane}?`)) return;
+    const timerDoc = lane === 1 ? timer1Doc : timer2Doc;
+    const timerBox = document.getElementById(`timer-box-${lane}`);
+    
+    await timerDoc.set({ startTime: null, running: false, finalTime: null });
+    timerBox.textContent = "00:00.000";
+  }
+
+  // Authentication
+  function login() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    auth.signInWithEmailAndPassword(email, password)
+      .catch(err => alert('Login failed: ' + err.message));
+  }
+
+  function logout() {
+    auth.signOut();
+  }
+
+  // Load current race data
+  async function loadCurrentRace(lane) {
+    const doc = await (lane === 1 ? currentRace1Doc : currentRace2Doc).get();
+    const botName = document.getElementById(`bot${lane}Name`);
+    const botTeam = document.getElementById(`bot${lane}Team`);
+    const botTime = document.getElementById(`bot${lane}Time`);
+    const botStatus = document.getElementById(`bot${lane}Status`);
+    
+    if (doc.exists) {
+      const data = doc.data();
+      botName.value = data.botName || '';
+      botTeam.value = data.teamName || '';
+      botTime.value = data.raceTime || '';
+      botStatus.value = data.status || 'completed';
+      lanePenalties[lane] = data.penalties || [];
+      renderPenalties(lane);
+      
+      // Update bot info display
+      const botInfo = document.getElementById(`bot-info-${lane}`);
+      botInfo.innerHTML = `
+        <p><strong>${data.botName}</strong></p>
+        <p>${data.teamName}</p>
+      `;
+    } else {
+      botName.value = '';
+      botTeam.value = '';
+      botTime.value = '';
+      botStatus.value = 'completed';
+      lanePenalties[lane] = [];
+      renderPenalties(lane);
+      
+      const botInfo = document.getElementById(`bot-info-${lane}`);
+      botInfo.innerHTML = '<p><strong>Waiting for bot...</strong></p>';
+    }
+  }
+
+  // Save live result for specific lane
+  async function saveLiveResult(lane) {
+    const botName = document.getElementById(`bot${lane}Name`).value.trim();
+    const teamName = document.getElementById(`bot${lane}Team`).value.trim();
+    const raceTime = parseFloat(document.getElementById(`bot${lane}Time`).value);
+    const status = document.getElementById(`bot${lane}Status`).value;
+
+    if (!botName || !teamName) {
+      alert('Enter bot name and team name');
+      return;
+    }
+    if (status === 'completed' && (isNaN(raceTime) || raceTime <= 0)) {
+      alert('Enter valid race time for completed races');
+      return;
+    }
+
+    const penalties = lanePenalties[lane];
+    const penaltySeconds = getTotalPenaltySeconds(lane);
+    const adjustedTime = status === 'completed' ? raceTime + penaltySeconds : null;
+
+    await liveResultsCollection.add({
+      botName,
+      teamName,
+      raceTime: status === 'completed' ? raceTime : null,
+      penalties,
+      penaltySeconds,
+      adjustedTime,
+      status,
+      lane,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    const raceDoc = lane === 1 ? currentRace1Doc : currentRace2Doc;
+    await raceDoc.set({
+      botName,
+      teamName,
+      raceTime: status === 'completed' ? raceTime : null,
+      penalties,
+      penaltySeconds,
+      adjustedTime,
+      status,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    alert(`Live result saved for Lane ${lane}!`);
+  }
+
+  // Save race results for both lanes
+  async function saveRaceResults() {
+    const results = [];
+    
+    for (let lane = 1; lane <= 2; lane++) {
+      const botName = document.getElementById(`bot${lane}Name`).value.trim();
+      const teamName = document.getElementById(`bot${lane}Team`).value.trim();
+      const raceTime = parseFloat(document.getElementById(`bot${lane}Time`).value);
+      const status = document.getElementById(`bot${lane}Status`).value;
+      
+      if (botName && teamName) {
+        const penalties = lanePenalties[lane];
+        const penaltySeconds = getTotalPenaltySeconds(lane);
+        results.push({
+          botName,
+          teamName,
+          raceTime: status === 'completed' ? raceTime : null,
+          penalties,
+          penaltySeconds,
+          adjustedTime: status === 'completed' ? raceTime + penaltySeconds : null,
+          status,
+          lane
+        });
+      }
+    }
+    
+    if (results.length === 0) {
+      alert('No valid race data to save');
+      return;
+    }
+    
+    for (const result of results) {
+      await liveResultsCollection.add({
+        ...result,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      
+      const raceDoc = result.lane === 1 ? currentRace1Doc : currentRace2Doc;
+      await raceDoc.set({
+        ...result,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+    
+    alert(`${results.length} live result(s) saved!`);
+  }
+
+  // Finish race for specific lane
+  async function finishRace(lane) {
+    if (!confirm(`Finish race for Bot ${lane}?`)) return;
+    
+    const botName = document.getElementById(`bot${lane}Name`).value.trim();
+    const teamName = document.getElementById(`bot${lane}Team`).value.trim();
+    const raceTime = parseFloat(document.getElementById(`bot${lane}Time`).value);
+    const status = document.getElementById(`bot${lane}Status`).value;
+    
+    if (!botName || !teamName) {
+      alert('Enter valid bot name and team name');
+      return;
+    }
+    
+    if (status === 'completed' && (isNaN(raceTime) || raceTime <= 0)) {
+      alert('Enter valid race time');
+      return;
+    }
+    
+    const penalties = lanePenalties[lane];
+    const penaltySeconds = getTotalPenaltySeconds(lane);
+    const adjustedTime = status === 'completed' ? raceTime + penaltySeconds : null;
+
+    await finalResultsCollection.add({
+      botName,
+      teamName,
+      raceTime: status === 'completed' ? raceTime : null,
+      penalties,
+      penaltySeconds,
+      adjustedTime,
+      status,
+      lane,
+      timestamp: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    alert(`Race for ${botName} finished!${penaltySeconds > 0 ? ` (+${penaltySeconds.toFixed(3)}s penalty applied, adjusted time: ${adjustedTime.toFixed(3)}s)` : ''}`);
+  }
+
+  // Clear both races
+  async function clearBothRaces() {
+    if (!confirm('Clear both race lanes?')) return;
+    
+    await Promise.all([
+      currentRace1Doc.delete(),
+      currentRace2Doc.delete()
+    ]);
+    
+    for (let lane = 1; lane <= 2; lane++) {
+      document.getElementById(`bot${lane}Name`).value = '';
+      document.getElementById(`bot${lane}Team`).value = '';
+      document.getElementById(`bot${lane}Time`).value = '';
+      document.getElementById(`bot${lane}Status`).value = 'completed';
+      lanePenalties[lane] = [];
+      renderPenalties(lane);
+      
+      const botInfo = document.getElementById(`bot-info-${lane}`);
+      botInfo.innerHTML = '<p><strong>Waiting for bot...</strong></p>';
+    }
+  }
+
+  // Listen to current races
+  function listenCurrentRaces() {
+    currentRace1Doc.onSnapshot(doc => {
+      const liveBox = document.querySelector('.live-match-display .race-bot-card:first-child');
+      if (doc.exists) {
+        const data = doc.data();
+        const penaltyCount = (data.penalties || []).length;
+        liveBox.innerHTML = `
+          <h3>Lane 1</h3>
+          <p><strong>${data.botName}</strong></p>
+          <p>${data.teamName}</p>
+          <p>${data.status === 'completed' && data.raceTime ? data.raceTime.toFixed(3) + 's' : data.status.toUpperCase()}</p>
+          ${penaltyCount > 0 ? `<p>⚠️ ${penaltyCount} penalt${penaltyCount === 1 ? 'y' : 'ies'} (+${(data.penaltySeconds || 0).toFixed(3)}s)</p>` : ''}
+        `;
+      } else {
+        liveBox.innerHTML = '<h3>Lane 1</h3><p>No bot racing</p>';
+      }
+    }, error => {
+      console.error("Error listening to race 1:", error);
+    });
+    
+    currentRace2Doc.onSnapshot(doc => {
+      const liveBox = document.querySelector('.live-match-display .race-bot-card:last-child');
+      if (doc.exists) {
+        const data = doc.data();
+        const penaltyCount = (data.penalties || []).length;
+        liveBox.innerHTML = `
+          <h3>Lane 2</h3>
+          <p><strong>${data.botName}</strong></p>
+          <p>${data.teamName}</p>
+          <p>${data.status === 'completed' && data.raceTime ? data.raceTime.toFixed(3) + 's' : data.status.toUpperCase()}</p>
+          ${penaltyCount > 0 ? `<p>⚠️ ${penaltyCount} penalt${penaltyCount === 1 ? 'y' : 'ies'} (+${(data.penaltySeconds || 0).toFixed(3)}s)</p>` : ''}
+        `;
+      } else {
+        liveBox.innerHTML = '<h3>Lane 2</h3><p>No bot racing</p>';
+      }
+    }, error => {
+      console.error("Error listening to race 2:", error);
+    });
+  }
+
+  // Listen to final results
+  function listenFinalResults() {
+    finalResultsCollection.orderBy('timestamp', 'desc').onSnapshot(snapshot => {
+      const tbody = document.getElementById('results-body');
+      tbody.innerHTML = '';
+      
+      const docs = snapshot.docs.sort((a, b) => {
+        const dataA = a.data();
+        const dataB = b.data();
+        
+        if (dataA.status === 'completed' && dataB.status === 'completed') {
+          const adjA = dataA.adjustedTime ?? dataA.raceTime;
+          const adjB = dataB.adjustedTime ?? dataB.raceTime;
+          return adjA - adjB;
+        }
+        if (dataA.status === 'completed') return -1;
+        if (dataB.status === 'completed') return 1;
+        
+        return dataA.timestamp?.toMillis() - dataB.timestamp?.toMillis();
+      });
+      
+      let position = 1;
+      docs.forEach(doc => {
+        const d = doc.data();
+        const row = document.createElement('tr');
+        const rawTimeDisplay = d.status === 'completed' ? `${d.raceTime.toFixed(3)}s` : '-';
+        const penalties = d.penalties || [];
+        const penaltySeconds = d.penaltySeconds || 0;
+        const penaltyDisplay = penalties.length > 0
+          ? `${penalties.map(p => p.label).join(', ')} (+${penaltySeconds.toFixed(3)}s)`
+          : '—';
+        const adjustedTime = d.adjustedTime ?? (d.status === 'completed' ? d.raceTime : null);
+        const adjustedDisplay = d.status === 'completed' ? `${adjustedTime.toFixed(3)}s` : '-';
+        const positionDisplay = d.status === 'completed' ? position++ : '-';
+        
+        row.innerHTML = `
+          <td>${positionDisplay}</td>
+          <td>${d.botName}</td>
+          <td>${d.teamName}</td>
+          <td>${rawTimeDisplay}</td>
+          <td>${penaltyDisplay}</td>
+          <td>${adjustedDisplay}</td>
+          <td>${d.status.toUpperCase()}</td>
+          <td>${auth.currentUser ? `<button onclick="removeFinalResult('${doc.id}')">Remove ❌</button>` : 'Final'}</td>
+        `;
+        tbody.appendChild(row);
+      });
+    }, error => {
+      console.error("Error listening to final results:", error);
+    });
+  }
+
+  async function removeFinalResult(id) {
+    if (!confirm('Remove this result?')) return;
+    await finalResultsCollection.doc(id).delete();
+  }
+
+  // Bot Management
+  async function addBot() {
+    const botName = document.getElementById('new-bot').value.trim();
+    const teamName = document.getElementById('bot-team').value.trim();
+    
+    if (!botName || !teamName) {
+      return alert('Enter both bot name and team name');
+    }
+
+    const snapshot = await botsCollection.where('botName', '==', botName).get();
+    if (!snapshot.empty) {
+      return alert('Bot name already registered');
+    }
+
+    await botsCollection.add({
+      botName,
+      teamName,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    
+    document.getElementById('new-bot').value = '';
+    document.getElementById('bot-team').value = '';
+    loadBots();
+  }
+
+  async function loadBots() {
+    const snapshot = await botsCollection.get();
+    const botsList = document.getElementById('bots-list');
+    botsList.innerHTML = '';
+
+    snapshot.forEach(doc => {
+      const data = doc.data();
+      const li = document.createElement('li');
+      li.textContent = `${data.botName} (${data.teamName})`;
+
+      const loadBtn1 = document.createElement('button');
+      loadBtn1.textContent = 'Load to Lane 1';
+      loadBtn1.onclick = () => loadBotToEditor(data, 1);
+
+      const loadBtn2 = document.createElement('button');
+      loadBtn2.textContent = 'Load to Lane 2';
+      loadBtn2.onclick = () => loadBotToEditor(data, 2);
+
+      const removeBtn = document.createElement('button');
+      removeBtn.textContent = 'Remove ❌';
+      removeBtn.onclick = async () => {
+        if (!confirm(`Remove bot "${data.botName}"?`)) return;
+        await botsCollection.doc(doc.id).delete();
+        loadBots();
+      };
+
+      li.appendChild(loadBtn1);
+      li.appendChild(loadBtn2);
+      li.appendChild(removeBtn);
+      botsList.appendChild(li);
+    });
+  }
+
+  async function loadBotToEditor(botData, lane) {
+    document.getElementById(`bot${lane}Name`).value = botData.botName;
+    document.getElementById(`bot${lane}Team`).value = botData.teamName;
+    document.getElementById(`bot${lane}Time`).value = '';
+    document.getElementById(`bot${lane}Status`).value = 'completed';
+    lanePenalties[lane] = [];
+    renderPenalties(lane);
+    
+    const raceDoc = lane === 1 ? currentRace1Doc : currentRace2Doc;
+    await raceDoc.set({
+      botName: botData.botName,
+      teamName: botData.teamName,
+      raceTime: null,
+      status: 'completed',
+      penalties: []
+    });
+    
+    const botInfo = document.getElementById(`bot-info-${lane}`);
+    botInfo.innerHTML = `
+      <p><strong>${botData.botName}</strong></p>
+      <p>${botData.teamName}</p>
+    `;
+    
+    alert(`Bot loaded into Lane ${lane}!`);
+  }
+
+  // Auth State UI
+  auth.onAuthStateChanged(user => {
+    const userInfo = document.getElementById('user-info');
+    const loginForm = document.getElementById('login-form');
+    const raceEditorDiv = document.getElementById('race-editor');
+    const botRegistration = document.getElementById('bot-registration');
+    
+    if (user) {
+      userInfo.innerHTML = `Logged in as: ${user.email} <button onclick="logout()">Logout</button>`;
+      loginForm.style.display = 'none';
+      raceEditorDiv.style.display = 'block';
+      botRegistration.style.display = 'block';
+
+      for (let lane = 1; lane <= 2; lane++) {
+        document.getElementById(`bot${lane}Name`).disabled = false;
+        document.getElementById(`bot${lane}Team`).disabled = false;
+        document.getElementById(`bot${lane}Time`).disabled = false;
+        document.getElementById(`bot${lane}Status`).disabled = false;
+      }
+
+      loadCurrentRace(1);
+      loadCurrentRace(2);
+      loadBots();
+    } else {
+      userInfo.textContent = '';
+      loginForm.style.display = 'block';
+      raceEditorDiv.style.display = 'none';
+      botRegistration.style.display = 'none';
+
+      for (let lane = 1; lane <= 2; lane++) {
+        document.getElementById(`bot${lane}Name`).disabled = true;
+        document.getElementById(`bot${lane}Team`).disabled = true;
+        document.getElementById(`bot${lane}Time`).disabled = true;
+        document.getElementById(`bot${lane}Status`).disabled = true;
+      }
+    }
+  });
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    listenCurrentRaces();
+    listenTimer(1);
+    listenTimer(2);
+    listenFinalResults();
+    
+    // Initialize matrix background
+    const canvas = document.getElementById('matrix-canvas');
+    const ctx = canvas.getContext('2d');
+    
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const letters = '01010101EXTRA1010101BOTICS101010100101';
+    const fontSize = 12;
+    const columns = canvas.width / fontSize;
+    
+    const drops = [];
+    for(let i = 0; i < columns; i++) {
+      drops[i] = 1;
+    }
+    
+    function drawMatrix() {
+      ctx.fillStyle = 'rgba(27, 38, 44, 0.05)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      ctx.fillStyle = '#0f4c75';
+      ctx.font = `${fontSize}px monospace`;
+      
+      for(let i = 0; i < drops.length; i++) {
+        const text = letters[Math.floor(Math.random() * letters.length)];
+        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+        
+        if(drops[i] * fontSize > canvas.height && Math.random() > 0.975) {
+          drops[i] = 0;
+        }
+        
+        drops[i]++;
+      }
+    }
+    
+    setInterval(drawMatrix, 33);
+  });
+
+  // Handle window resize
+  window.addEventListener('resize', function() {
+    const canvas = document.getElementById('matrix-canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+</script>
+
+<!-- Footer -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-content">
+      <div class="footer-section">
+        <h3>Extrabotics</h3>
+        <p>Pushing the boundaries of robotics innovation through cutting-edge technology and education.</p>
+        <div class="social-links">
+          <a href="contact" class="social-link">📧</a>
+          <a href="contact" class="social-link">📱</a>
+          <a href="contact" class="social-link">🔗</a>
+        </div>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Quick Links</h4>
+        <ul class="footer-links">
+          <li><a href="index">Home</a></li>
+          <li><a href="about">About</a></li>
+          <li><a href="events">Events</a></li>
+          <li><a href="gallery">Gallery</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Programs</h4>
+        <ul class="footer-links">
+          <li><a href="events">Robotics Competitions</a></li>
+          <li><a href="events">Educational Workshops</a></li>
+        </ul>
+      </div>
+      
+      <div class="footer-section">
+        <h4>Contact</h4>
+        <div class="contact-info">
+          <p>Ruaraka, Outering Road</p>
+          <p>+254 706 781 886</p>
+          <p>info@extrabotics.com</p>
+          <p>competitions@extrabotics.com</p>
+          <p>proposals@extrabotics.com</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <p>&copy; 2025 Extrabotics. All rights reserved. | Designed for innovation and excellence.</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

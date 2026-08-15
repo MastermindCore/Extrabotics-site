@@ -2423,14 +2423,38 @@ async function sLoadTeams() {
 }
 
 async function soccerGenerateFixtures() {
-  const mode=document.getElementById('soccer-match-type').value;
-  const snap=await sTeamsCol.get();
-  let teams=snap.docs.map(d=>d.data().teamName||d.data().name).sort(()=>0.5-Math.random());
-  const tc=mode==='1v1'?2:mode==='2v2'?4:6;
-  while(teams.length>=tc){
-    await sFixturesCol.add({teams:teams.splice(0,tc),matchType:mode,status:'pending',createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  const mode = document.getElementById('soccer-match-type').value;
+  const perSide = mode==='1v1' ? 1 : mode==='2v2' ? 2 : 3;
+  const tc = perSide * 2;
+
+  const snap = await sTeamsCol.get();
+  let teams = snap.docs.map(d => d.data().teamName || d.data().name).filter(Boolean).sort(() => 0.5 - Math.random());
+
+  if (teams.length < tc) {
+    alert(`Need at least ${tc} teams for ${mode} fixtures (you have ${teams.length}).`);
+    return;
   }
-  alert('Fixtures generated!'); sLoadFixtures();
+
+  let fixturesCreated = 0;
+  while (teams.length >= tc) {
+    const group = teams.splice(0, tc);
+    const sideA = group.slice(0, perSide);
+    const sideB = group.slice(perSide, tc);
+    await sFixturesCol.add({
+      sideA, sideB,
+      matchType: mode,
+      status: 'pending',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    fixturesCreated++;
+  }
+
+  let msg = `${fixturesCreated} fixture(s) generated!`;
+  if (teams.length > 0) {
+    msg += `\n\n⚠️ ${teams.length} team(s) couldn't be paired and were left out: ${teams.join(', ')}\nAdd more teams so the count divides evenly, or generate again after adjusting.`;
+  }
+  alert(msg);
+  sLoadFixtures();
 }
 
 async function soccerClearFixtures() {
@@ -2442,19 +2466,24 @@ async function soccerClearFixtures() {
 }
 
 async function sLoadFixtures() {
-  const snap=await sFixturesCol.where('status','==','pending').get();
-  const ul=document.getElementById('soccer-fixtures-list');
-  ul.innerHTML='';
+  const snap = await sFixturesCol.where('status','==','pending').get();
+  const ul = document.getElementById('soccer-fixtures-list');
+  ul.innerHTML = '';
   snap.forEach(doc => {
-    const d=doc.data();
-    const li=document.createElement('li');
-    li.innerHTML=`<span>${d.teams.join(' vs ')}</span>`;
-    const btn=document.createElement('button');
-    btn.className='btn btn-primary btn-sm';
-    btn.textContent='Load into Arena';
-    btn.onclick=()=>{
-      document.getElementById('soccer-a-teamA').value=d.teams[0];
-      document.getElementById('soccer-a-teamB').value=d.teams[1]||'';
+    const d = doc.data();
+    // Fall back gracefully for any old-format docs that only have `teams`
+    const sideA = d.sideA || (d.teams ? d.teams.slice(0, Math.ceil(d.teams.length/2)) : []);
+    const sideB = d.sideB || (d.teams ? d.teams.slice(Math.ceil(d.teams.length/2)) : []);
+
+    const li = document.createElement('li');
+    li.innerHTML = `<span><strong>${sideA.join(' & ')}</strong> &nbsp;vs&nbsp; <strong>${sideB.join(' & ')}</strong></span>`;
+
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary btn-sm';
+    btn.textContent = 'Load into Arena';
+    btn.onclick = () => {
+      document.getElementById('soccer-a-teamA').value = sideA.join(' / ');
+      document.getElementById('soccer-a-teamB').value = sideB.join(' / ');
     };
     li.appendChild(btn);
     ul.appendChild(li);
